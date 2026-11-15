@@ -70,7 +70,6 @@ export const Header: React.FC = () => {
   ];
 
   const publicNavItems: { id: ActiveTab; label: string; icon: React.ReactNode }[] = [
-    { id: 'auth', label: 'Sign In / Register', icon: <LogIn className="w-4 h-4" /> },
     { id: 'home', label: 'Company Overview', icon: <Home className="w-4 h-4" /> },
     { id: 'company', label: 'About Firm', icon: <Building2 className="w-4 h-4" /> },
     { id: 'markets', label: 'Markets', icon: <Globe className="w-4 h-4" /> },
