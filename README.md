@@ -1,32 +1,61 @@
-# React + TypeScript + Vite
+# Vantage Capital — Institutional Asset Management & Trading Terminal
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/freshstart2066-create/vantage-capital)
 
-Currently, two official plugins are available:
+Vantage Capital is an institutional asset management and trading platform that manages real client funds and provides direct market access (DMA). To protect client capital, all quantitative models and discretionary strategies are first forward-tested with paper simulation in our high-precision strategy validation lab before live client capital is allocated.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+## Live Deployment to Render
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 1-Click Blueprint Deployment
+Click the button above or visit:
+**[https://render.com/deploy?repo=https://github.com/freshstart2066-create/vantage-capital](https://render.com/deploy?repo=https://github.com/freshstart2066-create/vantage-capital)**
 
-## Expanding the Oxlint configuration
+Render will automatically read [`render.yaml`](./render.yaml) and configure the build settings.
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+### Manual Render Setup (Static Site)
+If setting up manually in your [Render Dashboard](https://dashboard.render.com/):
+1. Click **New +** &rarr; **Static Site**
+2. Connect repository: `freshstart2066-create/vantage-capital`
+3. Configure settings:
+   - **Name:** `vantage-capital`
+   - **Branch:** `main`
+   - **Build Command:** `npm install && npm run build`
+   - **Publish Directory:** `dist`
+4. Add Route Rewrite (SPA):
+   - **Source:** `/*`
+   - **Destination:** `/index.html`
+5. Click **Create Static Site**.
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+---
+
+## Core Institutional Features
+
+1. **USA Domestic Fedwire Banking (Inbound & Outbound):**
+   - Inbound Fedwire deposit registration with ABA routing number verification (`021000021`) and instant account credit.
+   - Outbound Fedwire disbursements with FinCEN compliance fields, real-time Fedwire reference generation (`FEDWIRE-XXXXXX`), and fee waivers.
+2. **Managed Client Portfolios & AUM Dashboard:**
+   - Real-money client account tracking ($410k+ AUM across Sovereign, Institutional Prime, Accredited, and Private Wealth mandates).
+   - High-Water Mark calculation, 2% management fee / 20% incentive fee tracking, and strategy allocation bridge.
+3. **Strategy Pre-Deployment Risk Guard:**
+   - Fiduciary risk gate requiring strategies to achieve a +10% profit hurdle within a 5% max daily risk budget and 10% trailing drawdown ceiling before live capital deployment.
+4. **Interactive Trading Terminal & Charting:**
+   - Multi-asset execution (Forex, US Equities, Commodities, Crypto) with candlestick charting, indicator overlays (SMA, EMA, Bollinger Bands, RSI), and pre-trade checklist logging.
+5. **Strategy Lab & Edge Analytics:**
+   - Isolated Win Rate %, Profit Factor, and mathematical expectancy calculation per setup rule tag.
+
+---
+
+## Local Development
+
+```bash
+# Install dependencies
+npm install
+
+# Start Vite local development server
+npm run dev
+
+# Build production bundle
+npm run build
 ```
-
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
