@@ -43,7 +43,7 @@ const STORAGE_KEYS = {
   CLIENTS: 'vantage_clients',
 };
 
-const DEFAULT_STARTING_BALANCE = 50000;
+const DEFAULT_STARTING_BALANCE = 0;
 
 const DEFAULT_STRATEGY_TAGS = [
   'Pullback EMA 20/50',
@@ -168,6 +168,9 @@ interface TradingContextType {
   // Managed Clients (AUM)
   managedClients: ManagedClient[];
   allocateStrategyToClient: (clientId: string, strategyName: string) => void;
+
+  // Administrative Capital Allocation Action
+  adminSetAccountBalance: (newBalance: number, targetAccountId?: string, memo?: string) => void;
 }
 
 const TradingContext = createContext<TradingContextType | undefined>(undefined);
@@ -230,27 +233,25 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [instruments, setInstruments] = useState<Instrument[]>(INITIAL_INSTRUMENTS);
   const [activeSymbol, setActiveSymbol] = useState<string>('EUR/USD');
   const [timeframe, setTimeframe] = useState<Timeframe>('5M');
-  const [activeTab, setActiveTab] = useState<ActiveTab>('terminal');
+  const [activeTab, setActiveTab] = useState<ActiveTab>(() => {
+    try {
+      const savedUser = localStorage.getItem(STORAGE_KEYS.USER);
+      if (savedUser) return 'terminal';
+    } catch {}
+    return 'auth'; // Login screen is the FIRST to be seen!
+  });
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
   const [slippageEnabled, setSlippageEnabled] = useState<boolean>(true);
   const [liveFeedConnected, setLiveFeedConnected] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'danger' | 'info' } | null>(null);
 
-  // User Authentication State
+  // User Authentication State — defaults to null (no user logged in)
   const [user, setUser] = useState<UserProfile | null>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEYS.USER);
       if (saved) return JSON.parse(saved);
     } catch {}
-    return {
-      id: 'usr_demo_1',
-      name: 'Alex Vance',
-      email: 'alex.vance@vantagecapital.demo',
-      accountId: 'VC-89421',
-      tier: 'Professional ($50,000)',
-      strategyFocus: 'Price Action & Breakouts',
-      joinedDate: Date.now() - 14 * 24 * 3600 * 1000,
-    };
+    return null;
   });
 
   // Strategy Tags
@@ -1516,13 +1517,7 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   // Sign In Action
   const signIn = (email: string, name?: string, tier?: string) => {
-    const selectedTier = tier || 'Professional ($50,000)';
-    let startingCap = 50000;
-    if (selectedTier.includes('10k') || selectedTier.includes('10,000')) startingCap = 10000;
-    else if (selectedTier.includes('25k') || selectedTier.includes('25,000')) startingCap = 25000;
-    else if (selectedTier.includes('100k') || selectedTier.includes('100,000')) startingCap = 100000;
-    else if (selectedTier.includes('250k') || selectedTier.includes('250,000')) startingCap = 250000;
-
+    const selectedTier = tier || 'Unfunded Mandate';
     const newUser: UserProfile = {
       id: 'usr_' + Date.now(),
       name: name || email.split('@')[0],
@@ -1538,12 +1533,11 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     try {
       localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(newUser));
     } catch {}
-    resetAccount(startingCap);
     setToastMessage({ text: `Welcome back, ${newUser.name}! Session authenticated.`, type: 'success' });
     setActiveTab('terminal');
   };
 
-  // Sign Up Action
+  // Sign Up Action — new users start with $0.00 Active Capital!
   const signUp = (
     name: string,
     email: string,
@@ -1552,12 +1546,6 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     accountType?: 'ECN_RAW' | 'STANDARD_STP',
     baseCurrency?: 'USD' | 'EUR' | 'GBP'
   ) => {
-    let startingCap = 50000;
-    if (tier.includes('10k') || tier.includes('10,000')) startingCap = 10000;
-    else if (tier.includes('25k') || tier.includes('25,000')) startingCap = 25000;
-    else if (tier.includes('100k') || tier.includes('100,000')) startingCap = 100000;
-    else if (tier.includes('250k') || tier.includes('250,000')) startingCap = 250000;
-
     const newUser: UserProfile = {
       id: 'usr_' + Date.now(),
       name,
@@ -1574,9 +1562,15 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     try {
       localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(newUser));
     } catch {}
-    resetAccount(startingCap);
-    setToastMessage({ text: `Account Created! Initialized with ${tier} deposit capital.`, type: 'success' });
-    setActiveTab('terminal');
+
+    // NEW SIGNUPS START AT $0.00 BALANCE!
+    // Balance is only updated when the firm owner allocates capital or an inbound wire clears.
+    resetAccount(0);
+    setToastMessage({
+      text: `Account created for ${name}! Active Capital is $0.00 USD (Awaiting Capital Allocation / Wire Deposit).`,
+      type: 'info',
+    });
+    setActiveTab('profile');
   };
 
   // Sign Out Action
@@ -1584,9 +1578,29 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setUser(null);
     try {
       localStorage.removeItem(STORAGE_KEYS.USER);
+      localStorage.removeItem(STORAGE_KEYS.ACCOUNT);
     } catch {}
+    resetAccount(0);
     setToastMessage({ text: 'Signed out of session.', type: 'info' });
     setActiveTab('auth');
+  };
+
+  // Administrative Capital Allocation Action
+  const adminSetAccountBalance = (newBalance: number, targetAccountId?: string, memo?: string) => {
+    const cleanBalance = Math.max(0, Number(newBalance.toFixed(2)));
+    setAccount({
+      balance: cleanBalance,
+      equity: cleanBalance,
+      margin: 0,
+      freeMargin: cleanBalance,
+      marginLevel: 0,
+      startingBalance: cleanBalance,
+      currency: 'USD',
+    });
+    setToastMessage({
+      text: `Capital allocated: $${cleanBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })} USD ${targetAccountId ? `for ${targetAccountId}` : ''} ${memo ? `(${memo})` : ''}`,
+      type: 'success',
+    });
   };
 
   // Update User Profile
@@ -1783,6 +1797,7 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
         requestWireDeposit,
         managedClients,
         allocateStrategyToClient,
+        adminSetAccountBalance,
       }}
     >
       {children}

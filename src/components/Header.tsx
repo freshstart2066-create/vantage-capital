@@ -16,16 +16,16 @@ import {
   Monitor,
   TrendingUp,
   TrendingDown,
-  RotateCcw,
   LogOut,
   LogIn,
   Landmark,
   User,
-  Briefcase,
   ArrowDownToLine,
+  ShieldAlert,
 } from 'lucide-react';
 import { WithdrawalModal } from './Withdrawal/WithdrawalModal';
 import { DepositModal } from './Deposit/DepositModal';
+import { AdminAllocationModal } from './Admin/AdminAllocationModal';
 
 export const Header: React.FC = () => {
   const {
@@ -36,7 +36,6 @@ export const Header: React.FC = () => {
     resolvedTheme,
     account,
     instruments,
-    resetAccount,
     user,
     signOut,
   } = useTrading();
@@ -45,6 +44,7 @@ export const Header: React.FC = () => {
   const [utcTime, setUtcTime] = useState<string>('');
   const [isWithdrawOpen, setIsWithdrawOpen] = useState<boolean>(false);
   const [isDepositOpen, setIsDepositOpen] = useState<boolean>(false);
+  const [isAdminOpen, setIsAdminOpen] = useState<boolean>(false);
 
   useEffect(() => {
     const updateTime = () => {
@@ -56,9 +56,9 @@ export const Header: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const navItems: { id: ActiveTab; label: string; icon: React.ReactNode }[] = [
+  // Authenticated trader nav items vs public unauthenticated nav items (No public client list!)
+  const authenticatedNavItems: { id: ActiveTab; label: string; icon: React.ReactNode }[] = [
     { id: 'terminal', label: 'Terminal', icon: <Activity className="w-4 h-4" /> },
-    { id: 'clients', label: 'Client Portfolios', icon: <Briefcase className="w-4 h-4" /> },
     { id: 'strategy_lab', label: 'Strategy Lab', icon: <Award className="w-4 h-4" /> },
     { id: 'calendar', label: 'Economic Calendar', icon: <Calendar className="w-4 h-4" /> },
     { id: 'profile', label: 'Trader Profile', icon: <User className="w-4 h-4" /> },
@@ -68,6 +68,17 @@ export const Header: React.FC = () => {
     { id: 'compliance', label: 'Risk & Legal', icon: <AlertTriangle className="w-4 h-4" /> },
     { id: 'settings', label: 'Settings', icon: <Settings className="w-4 h-4" /> },
   ];
+
+  const publicNavItems: { id: ActiveTab; label: string; icon: React.ReactNode }[] = [
+    { id: 'auth', label: 'Sign In / Register', icon: <LogIn className="w-4 h-4" /> },
+    { id: 'home', label: 'Company Overview', icon: <Home className="w-4 h-4" /> },
+    { id: 'company', label: 'About Firm', icon: <Building2 className="w-4 h-4" /> },
+    { id: 'markets', label: 'Markets', icon: <Globe className="w-4 h-4" /> },
+    { id: 'calendar', label: 'Economic Calendar', icon: <Calendar className="w-4 h-4" /> },
+    { id: 'compliance', label: 'Risk & Legal', icon: <AlertTriangle className="w-4 h-4" /> },
+  ];
+
+  const navItems = user ? authenticatedNavItems : publicNavItems;
 
   // Top 6 marquee instruments
   const marqueeInstruments = instruments.slice(0, 6);
@@ -122,7 +133,7 @@ export const Header: React.FC = () => {
       <div className="max-w-[1720px] mx-auto px-4 py-3 flex items-center justify-between gap-4">
         {/* Logo & Company Title */}
         <div
-          onClick={() => setActiveTab('terminal')}
+          onClick={() => setActiveTab(user ? 'terminal' : 'home')}
           className="cursor-pointer group select-none hover:opacity-90 transition-opacity"
         >
           <VantageLogo size={36} showText={true} />
@@ -146,73 +157,95 @@ export const Header: React.FC = () => {
           ))}
         </nav>
 
-        {/* Right Corner Controls: Balance badge + Theme + Reset + User Auth */}
+        {/* Right Corner Controls: Balance badge + Theme + Admin Allocation + User Auth */}
         <div className="flex items-center gap-2">
           {/* User Session Pill or Sign In Button */}
           {user ? (
-            <div className="flex items-center gap-2 neo-inset-sm p-1 rounded-xl">
-              <div
-                onClick={() => setActiveTab('profile')}
-                className="w-7 h-7 rounded-lg bg-[var(--accent-brand)] text-white font-bold flex items-center justify-center text-xs cursor-pointer select-none hover:opacity-90 transition-opacity"
-                title="Trader Profile & Verification"
-              >
-                {user.name.charAt(0)}
+            <>
+              <div className="flex items-center gap-2 neo-inset-sm p-1 rounded-xl">
+                <div
+                  onClick={() => setActiveTab('profile')}
+                  className="w-7 h-7 rounded-lg bg-[var(--accent-brand)] text-white font-bold flex items-center justify-center text-xs cursor-pointer select-none hover:opacity-90 transition-opacity"
+                  title="Trader Profile & Verification"
+                >
+                  {user.name.charAt(0)}
+                </div>
+                <div
+                  onClick={() => setActiveTab('profile')}
+                  className="hidden sm:flex flex-col text-left pr-1 cursor-pointer select-none hover:opacity-80 transition-opacity"
+                  title="View Trader Profile"
+                >
+                  <span className="text-[11px] font-bold text-[var(--text-primary)] leading-tight">{user.name}</span>
+                  <span className="text-[9px] font-mono text-[var(--text-muted)] leading-tight">{user.accountId}</span>
+                </div>
+                <button
+                  onClick={signOut}
+                  className="neo-btn p-1 text-[var(--text-muted)] hover:text-[var(--accent-short)]"
+                  title="Sign Out"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                </button>
               </div>
-              <div
-                onClick={() => setActiveTab('profile')}
-                className="hidden sm:flex flex-col text-left pr-1 cursor-pointer select-none hover:opacity-80 transition-opacity"
-                title="View Trader Profile"
-              >
-                <span className="text-[11px] font-bold text-[var(--text-primary)] leading-tight">{user.name}</span>
-                <span className="text-[9px] font-mono text-[var(--text-muted)] leading-tight">{user.accountId}</span>
+
+              {/* Account Balance Indicator (only shown for authenticated users) */}
+              <div className="neo-inset-sm px-3 py-1 flex flex-col text-right">
+                <span className="text-[9px] uppercase tracking-wider font-bold text-[var(--accent-long)]">
+                  Active Capital
+                </span>
+                <span className="text-xs font-bold font-mono text-[var(--text-primary)]">
+                  ${account.balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
               </div>
+
+              {/* Quick Deposit Wire Button */}
               <button
-                onClick={signOut}
-                className="neo-btn p-1 text-[var(--text-muted)] hover:text-[var(--accent-short)]"
-                title="Sign Out"
+                onClick={() => setIsDepositOpen(true)}
+                className="neo-btn py-1.5 px-2.5 text-xs font-bold text-sky-400 border border-sky-500/30 hover:border-sky-500/60 flex items-center gap-1.5"
+                title="USA Domestic Wire Transfer Deposit"
               >
-                <LogOut className="w-3.5 h-3.5" />
+                <ArrowDownToLine className="w-3.5 h-3.5 text-sky-400" />
+                <span className="hidden sm:inline">Deposit</span>
+              </button>
+
+              {/* Quick Withdraw Wire Button */}
+              <button
+                onClick={() => setIsWithdrawOpen(true)}
+                className="neo-btn py-1.5 px-2.5 text-xs font-bold text-emerald-400 border border-emerald-500/30 hover:border-emerald-500/60 flex items-center gap-1.5"
+                title="USA Domestic Wire Transfer Withdrawal"
+              >
+                <Landmark className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="hidden sm:inline">Withdraw</span>
+              </button>
+
+              {/* Firm Owner / Admin Capital Allocation Controller Button */}
+              <button
+                onClick={() => setIsAdminOpen(true)}
+                className="neo-btn py-1.5 px-2.5 text-xs font-bold text-amber-400 border border-amber-500/30 hover:border-amber-500/60 flex items-center gap-1.5"
+                title="Firm Owner Capital Allocation Controller"
+              >
+                <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
+                <span className="hidden sm:inline">Allocate Capital</span>
+              </button>
+            </>
+          ) : (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setActiveTab('auth')}
+                className="neo-btn neo-btn-primary py-1.5 px-3.5 text-xs font-bold rounded-lg flex items-center gap-1.5"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Sign In / Register</span>
+              </button>
+              <button
+                onClick={() => setIsAdminOpen(true)}
+                className="neo-btn py-1.5 px-2.5 text-xs font-semibold text-amber-400 border border-amber-500/30 hover:border-amber-500/60 flex items-center gap-1.5"
+                title="Firm Owner Capital Allocation Controller"
+              >
+                <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
+                <span className="hidden sm:inline">Admin Allocation</span>
               </button>
             </div>
-          ) : (
-            <button
-              onClick={() => setActiveTab('auth')}
-              className="neo-btn neo-btn-primary py-1.5 px-3 text-xs font-bold rounded-lg flex items-center gap-1.5"
-            >
-              <LogIn className="w-3.5 h-3.5" />
-              <span>Sign In</span>
-            </button>
           )}
-
-          {/* Account Balance Indicator */}
-          <div className="neo-inset-sm px-3 py-1 flex flex-col text-right">
-            <span className="text-[9px] uppercase tracking-wider font-bold text-[var(--accent-long)]">
-              Active Capital
-            </span>
-            <span className="text-xs font-bold font-mono text-[var(--text-primary)]">
-              ${account.balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </span>
-          </div>
-
-          {/* Quick Deposit Wire Button */}
-          <button
-            onClick={() => setIsDepositOpen(true)}
-            className="neo-btn py-1.5 px-2.5 text-xs font-bold text-sky-400 border border-sky-500/30 hover:border-sky-500/60 flex items-center gap-1.5"
-            title="USA Domestic Wire Transfer Deposit"
-          >
-            <ArrowDownToLine className="w-3.5 h-3.5 text-sky-400" />
-            <span className="hidden sm:inline">Deposit</span>
-          </button>
-
-          {/* Quick Withdraw Wire Button */}
-          <button
-            onClick={() => setIsWithdrawOpen(true)}
-            className="neo-btn py-1.5 px-2.5 text-xs font-bold text-emerald-400 border border-emerald-500/30 hover:border-emerald-500/60 flex items-center gap-1.5"
-            title="USA Domestic Wire Transfer Withdrawal"
-          >
-            <Landmark className="w-3.5 h-3.5 text-emerald-400" />
-            <span className="hidden sm:inline">Withdraw</span>
-          </button>
 
           {/* Quick Theme Toggle Button */}
           <button
@@ -228,19 +261,6 @@ export const Header: React.FC = () => {
             ) : (
               <Sun className="w-4 h-4 text-amber-500" />
             )}
-          </button>
-
-          {/* Quick Reset Account Capital */}
-          <button
-            onClick={() => {
-              if (window.confirm('Reset account capital to $50,000?')) {
-                resetAccount(50000);
-              }
-            }}
-            className="neo-btn p-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] hidden sm:inline-flex"
-            title="Reset Capital Deposit ($50,000)"
-          >
-            <RotateCcw className="w-4 h-4" />
           </button>
         </div>
       </div>
@@ -263,9 +283,10 @@ export const Header: React.FC = () => {
         ))}
       </div>
 
-      {/* USA Domestic Wire Inbound & Outbound Modals */}
+      {/* USA Domestic Wire Inbound & Outbound Modals + Admin Capital Allocator */}
       <WithdrawalModal isOpen={isWithdrawOpen} onClose={() => setIsWithdrawOpen(false)} />
       <DepositModal isOpen={isDepositOpen} onClose={() => setIsDepositOpen(false)} />
+      <AdminAllocationModal isOpen={isAdminOpen} onClose={() => setIsAdminOpen(false)} />
     </header>
   );
 };

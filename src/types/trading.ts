@@ -247,4 +247,14 @@ export interface ManagedClient {
   status: 'ACTIVE' | 'PENDING_DEPLOYMENT' | 'REBALANCING';
 }
 
-export type ActiveTab = 'home' | 'terminal' | 'strategy_lab' | 'calendar' | 'markets' | 'company' | 'compliance' | 'settings' | 'auth' | 'profile' | 'clients';
+export type ActiveTab =
+  | 'auth'
+  | 'home'
+  | 'terminal'
+  | 'strategy_lab'
+  | 'calendar'
+  | 'markets'
+  | 'company'
+  | 'compliance'
+  | 'settings'
+  | 'profile';

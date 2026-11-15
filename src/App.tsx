@@ -12,11 +12,18 @@ import { CompanyHome } from './components/Home/CompanyHome';
 import { EconomicCalendar } from './components/Calendar/EconomicCalendar';
 import { AuthPage } from './components/Auth/AuthPage';
 import { ProfilePage } from './components/Profile/ProfilePage';
-import { ClientPortfolios } from './components/Clients/ClientPortfolios';
 import { CheckCircle2, AlertTriangle, Info, X } from 'lucide-react';
 
 const MainLayout: React.FC = () => {
-  const { activeTab, toastMessage, clearToast } = useTrading();
+  const { activeTab, setActiveTab, user, toastMessage, clearToast } = useTrading();
+
+  // If user is not authenticated and attempts to view private institutional trading views, redirect to auth!
+  useEffect(() => {
+    const publicTabs = ['auth', 'home', 'company', 'compliance', 'markets', 'calendar'];
+    if (!user && !publicTabs.includes(activeTab)) {
+      setActiveTab('auth');
+    }
+  }, [user, activeTab, setActiveTab]);
 
   // Auto clear toast after 4 seconds
   useEffect(() => {
@@ -35,6 +42,7 @@ const MainLayout: React.FC = () => {
 
       {/* Main Content Workspace */}
       <main className="flex-1 max-w-[1720px] w-full mx-auto px-3 sm:px-4 py-4">
+        {activeTab === 'auth' && <AuthPage />}
         {activeTab === 'home' && <CompanyHome />}
         {activeTab === 'terminal' && <TradingTerminal />}
         {activeTab === 'strategy_lab' && <StrategyLab />}
@@ -43,9 +51,7 @@ const MainLayout: React.FC = () => {
         {activeTab === 'company' && <CompanyAbout />}
         {activeTab === 'compliance' && <ComplianceDisclaimers />}
         {activeTab === 'settings' && <SettingsView />}
-        {activeTab === 'auth' && <AuthPage />}
         {activeTab === 'profile' && <ProfilePage />}
-        {activeTab === 'clients' && <ClientPortfolios />}
       </main>
 
       {/* Floating Neomorphic Notification Toast */}
