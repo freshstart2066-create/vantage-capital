@@ -47,7 +47,7 @@ export const ProfilePage: React.FC = () => {
     user?.savedBankName || 'JPMorgan Chase Bank, N.A.'
   );
   const [savedRoutingNumber, setSavedRoutingNumber] = useState<string>(
-    user?.savedRoutingNumber || '021000021'
+    user?.savedRoutingNumber || ''
   );
   const [savedAccountNumber, setSavedAccountNumber] = useState<string>(
     user?.savedAccountNumberMasked || '•••• 8912'

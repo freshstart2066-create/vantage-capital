@@ -44,6 +44,7 @@ const STORAGE_KEYS = {
 };
 
 const DEFAULT_STARTING_BALANCE = 0;
+const LEDGER_KEY = (email: string) => 'vantage_ledger_seen_' + email.toLowerCase();
 
 const DEFAULT_STRATEGY_TAGS = [
   'Pullback EMA 20/50',
@@ -152,11 +153,11 @@ interface TradingContextType {
     accountType: 'CHECKING' | 'SAVINGS';
     beneficiaryAddress: string;
     wireMemo?: string;
-  }) => { success: boolean; error?: string; referenceId?: string };
+  }) => Promise<{ success: boolean; error?: string; referenceId?: string }>;
 
-  // Incoming Wire Deposits
+  // Incoming Wire Deposits (mirrors the server ledger history)
   depositRequests: DepositRequest[];
-  requestWireDeposit: (params: {
+  requestWireDeposit?: (params: {
     amount: number;
     originatorName: string;
     originatingBankName: string;
@@ -168,6 +169,10 @@ interface TradingContextType {
   // Managed Clients (AUM)
   managedClients: ManagedClient[];
   allocateStrategyToClient: (clientId: string, strategyName: string) => void;
+
+  // Server ledger sync (read-only from the client's point of view)
+  applyServerLedger: (serverBalance: number, email: string) => void;
+  reconcileRequests: (txs: Tx[]) => void;
 
   // Administrative Capital Allocation Action
   adminSetAccountBalance: (newBalance: number, targetAccountId?: string, memo?: string) => void;
@@ -228,7 +233,7 @@ function playTradingSound(type: 'buy' | 'sell' | 'close' | 'win' | 'alert') {
   }
 }
 
-import { clearToken } from '../services/api';
+import { api, clearToken, type Tx } from '../services/api';
 
 export const tabToPath = (tab: ActiveTab): string => {
   switch (tab) {
@@ -1270,7 +1275,7 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   // USA Local Wire Transfer Withdrawal Request Action
-  const requestWireWithdrawal = (params: {
+  const requestWireWithdrawal = async (params: {
     amount: number;
     beneficiaryName: string;
     bankName: string;
@@ -1279,7 +1284,7 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     accountType: 'CHECKING' | 'SAVINGS';
     beneficiaryAddress: string;
     wireMemo?: string;
-  }): { success: boolean; error?: string; referenceId?: string } => {
+  }): Promise<{ success: boolean; error?: string; referenceId?: string }> => {
     const {
       amount,
       beneficiaryName,
@@ -1317,7 +1322,29 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       return { success: false, error: err };
     }
 
-    const refNum = `TRANSFER-${Math.floor(100000 + Math.random() * 900000)}`;
+    // The server is the authority: it checks settled funds and reserves them atomically.
+    let refNum: string;
+    try {
+      const r = await api.withdraw({
+        amount,
+        beneficiaryName: beneficiaryName.trim(),
+        bankName: bankName.trim(),
+        routingNumber: cleanRouting,
+        accountNumber: cleanAccount,
+        accountType,
+        beneficiaryAddress: beneficiaryAddress.trim(),
+        wireMemo: wireMemo?.trim(),
+      });
+      refNum = r.referenceId;
+      try {
+        if (user?.email) localStorage.setItem(LEDGER_KEY(user.email), String(r.balance));
+      } catch { /* ignore */ }
+    } catch (e) {
+      const err = (e as Error).message;
+      setToastMessage({ text: err, type: 'danger' });
+      return { success: false, error: err };
+    }
+
     const last4 = cleanAccount.slice(-4);
     const masked = `•••• ${last4}`;
 
@@ -1359,15 +1386,6 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       text: `Wire withdrawal submitted: $${amount.toLocaleString()} via Bank transfer (${refNum})`,
       type: 'success',
     });
-
-    // Simulate Bank transfer network dispatch confirmation
-    setTimeout(() => {
-      setWithdrawalRequests(prev =>
-        prev.map(r =>
-          r.referenceId === refNum ? { ...r, status: 'DISPATCHED_TRANSFER' } : r
-        )
-      );
-    }, 6000);
 
     return { success: true, referenceId: refNum };
   };
@@ -1655,10 +1673,108 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     try {
       localStorage.removeItem(STORAGE_KEYS.USER);
       localStorage.removeItem(STORAGE_KEYS.ACCOUNT);
+      localStorage.removeItem(STORAGE_KEYS.WITHDRAWALS);
+      localStorage.removeItem(STORAGE_KEYS.DEPOSITS);
     } catch {}
     resetAccount(0);
+    setWithdrawalRequests([]);
+    setDepositRequests([]);
     setToastMessage({ text: 'Signed out of session.', type: 'info' });
     setActiveTab('auth');
+  };
+
+  // Server ledger -> terminal. Applies only the CHANGE since the last value seen for this user, so local simulated P&L is preserved.
+  const applyServerLedger = (serverBalance: number, email: string) => {
+    const key = LEDGER_KEY(email);
+    let seen: number | null = null;
+    try {
+      const v = localStorage.getItem(key);
+      seen = v === null ? null : Number(v);
+    } catch { /* ignore */ }
+    if (seen === null || !Number.isFinite(seen)) {
+      // First sync for this user: align the terminal to ledger + realized simulated P&L.
+      const realized = closedTrades.reduce((a, t) => a + t.pnl, 0);
+      seen = Number((account.balance - realized).toFixed(2));
+    }
+    const delta = Number((serverBalance - seen).toFixed(2));
+    try {
+      localStorage.setItem(key, String(serverBalance));
+    } catch { /* ignore */ }
+    if (Math.abs(delta) < 0.005) return;
+    setAccount(prev => {
+      const balance = Number((prev.balance + delta).toFixed(2));
+      const equity = Number((prev.equity + delta).toFixed(2));
+      return {
+        ...prev,
+        balance,
+        equity,
+        freeMargin: Number(Math.max(equity - prev.margin, 0).toFixed(2)),
+        startingBalance: Number((prev.startingBalance + delta).toFixed(2)),
+      };
+    });
+    if (delta > 0) {
+      setToastMessage({
+        text: `Funds credited: $${delta.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+        type: 'success',
+      });
+    }
+  };
+
+  // Mirror the server's withdrawal / deposit history (statuses, and anything made on another device).
+  const reconcileRequests = (txs: Tx[]) => {
+    const wdStatus = (x: string): WithdrawalRequest['status'] =>
+      x === 'completed' ? 'SETTLED' : x === 'rejected' ? 'REJECTED' : x === 'processing' ? 'DISPATCHED_TRANSFER' : 'PROCESSING';
+    const depStatus = (x: string): DepositRequest['status'] =>
+      x === 'completed' ? 'SETTLED' : x === 'rejected' ? 'REJECTED' : x === 'processing' ? 'PROCESSING' : 'PENDING_CONFIRMATION';
+    const recent = (r: { timestamp: number }) => Date.now() - r.timestamp < 60000;
+    setWithdrawalRequests(prev => {
+      const refs = new Set(txs.filter(t => t.kind === 'withdrawal').map(t => t.ref));
+      const fromServer = txs.filter(t => t.kind === 'withdrawal').map((t): WithdrawalRequest => {
+        const old = prev.find(r => r.referenceId === t.ref);
+        const d = t.detail || {};
+        return {
+          ...(old ?? {
+            id: 'wd_' + t.id,
+            referenceId: t.ref || '',
+            amount: t.amount,
+            fee: 0,
+            netAmount: t.amount,
+            beneficiaryName: d.beneficiaryName || '',
+            bankName: d.bankName || '',
+            routingNumber: d.routingNumber || '',
+            accountNumberMasked: '\u2022\u2022\u2022\u2022 ' + (d.accountLast4 || ''),
+            accountType: d.accountType === 'SAVINGS' ? 'SAVINGS' : 'CHECKING',
+            beneficiaryAddress: d.beneficiaryAddress || '',
+            wireMemo: t.note,
+            timestamp: t.created_at,
+            estimatedArrival: 'Same-day bank transfer (cutoff 16:00 EST)',
+          }),
+          status: wdStatus(t.status),
+        };
+      });
+      return [...prev.filter(r => !refs.has(r.referenceId) && recent(r)), ...fromServer];
+    });
+    setDepositRequests(prev => {
+      const refs = new Set(txs.filter(t => t.kind === 'deposit' && t.ref).map(t => t.ref));
+      const fromServer = txs.filter(t => t.kind === 'deposit' && t.ref).map((t): DepositRequest => {
+        const old = prev.find(r => r.referenceId === t.ref);
+        const d = t.detail || {};
+        return {
+          ...(old ?? {
+            id: 'dep_' + t.id,
+            referenceId: t.ref || '',
+            amount: t.amount,
+            originatorName: d.originatorName || '',
+            originatingBankName: d.originatingBankName || '',
+            originatingRoutingNumber: '',
+            wireMemo: t.note,
+            timestamp: t.created_at,
+          }),
+          status: depStatus(t.status),
+        };
+      });
+      return [...prev.filter(r => !refs.has(r.referenceId) && recent(r)), ...fromServer];
+    });
   };
 
   // Administrative Capital Allocation Action
@@ -1874,6 +1990,8 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
         managedClients,
         allocateStrategyToClient,
         adminSetAccountBalance,
+        applyServerLedger,
+        reconcileRequests,
       }}
     >
       {children}

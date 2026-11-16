@@ -1,61 +1,43 @@
-# Vantage Capital — Institutional Asset Management & Trading Terminal
+# Vantage Capital: Strategy Simulator and Client Ledger
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/freshstart2066-create/vantage-capital)
+React/Vite terminal plus a zero-dependency Node 22 server (SQLite).
 
-Vantage Capital is an institutional asset management and trading platform that manages real client funds and provides direct market access (DMA). To protect client capital, all quantitative models and discretionary strategies are first forward-tested with paper simulation in our high-precision strategy validation lab before live client capital is allocated.
+## What it is for
+Vantage Capital is meant to be an asset-management firm's platform: strategies are first forward-tested on simulated (paper) trading in the Strategy Lab, and only strategies that pass a risk gate (+10% profit hurdle, 5% daily risk budget, 10% trailing drawdown) would get live client capital. It has a trading terminal and charting, a Strategy Lab with win rate / profit factor / expectancy per setup, client onboarding with deposits and withdrawals, and an admin console for crediting, approving and reviewing.
 
----
+> **Status: simulation.** Market prices are generated locally (`marketEngine.ts`) and trade results are simulated.
+> Do not describe this as live market access, real AUM or a licensed custodian until that is true and licensed.
+> The wire instructions in the Deposit screen are placeholders: replace them with a real account before taking money.
 
-## Live Deployment to Render
+## Money model
+- **Server ledger (integer cents)** is the only withdrawable balance. It changes only via:
+  admin credit, admin-confirmed wire deposit, and withdrawals (funds are reserved atomically at request time; a rejection refunds).
+- **Simulated trading P&L** lives in the browser, is uploaded for strategy review (`/api/trades`) and never changes the ledger.
+- Deposits: the client posts a *notice*; the client is credited only when it completes (automatically in sandbox, or when an admin confirms in real mode).
+- Withdrawals: server checks settled funds and validates the ABA routing checksum. Account numbers are AES-256-GCM encrypted at rest and shown only to admins.
 
-### 1-Click Blueprint Deployment
-Click the button above or visit:
-**[https://render.com/deploy?repo=https://github.com/freshstart2066-create/vantage-capital](https://render.com/deploy?repo=https://github.com/freshstart2066-create/vantage-capital)**
+## Test (sandbox) mode
+`SANDBOX_MODE` defaults to on. Every user gets a personal dummy US account number (Deposit > copy details). After "I have sent the transfer",
+a deposit goes Pending -> Processing -> Completed automatically (about 40 s, `SANDBOX_DELAY_SEC`) and is credited exactly once. Withdrawals do the same over about 80 s
+unless an admin approves or rejects first. Test routing number: `110000000`. Set `SANDBOX_MODE=false` for real operation: then nothing is credited until an admin confirms the funds.
 
-Render will automatically read [`render.yaml`](./render.yaml) and configure the build settings.
+## Environment variables (Render)
+| Name | Purpose |
+|---|---|
+| `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Admin bootstrap (password required in production) |
+| `SANDBOX_MODE` | `true` (default) auto-settles transfers with dummy bank details; `false` requires admin confirmation |
+| `SESSION_SECRET` | Optional. Token signing key (else generated and stored in the DB) |
+| `ACCOUNT_KEY` | Optional but recommended. Separate key for bank-account encryption. Losing it makes stored account numbers unreadable |
+| `DB_PATH` | SQLite path on the persistent disk (`/var/data/vantage.db`) |
 
-### Manual Render Setup (Static Site)
-If setting up manually in your [Render Dashboard](https://dashboard.render.com/):
-1. Click **New +** &rarr; **Static Site**
-2. Connect repository: `freshstart2066-create/vantage-capital`
-3. Configure settings:
-   - **Name:** `vantage-capital`
-   - **Branch:** `main`
-   - **Build Command:** `npm install && npm run build`
-   - **Publish Directory:** `dist`
-4. Add Route Rewrite (SPA):
-   - **Source:** `/*`
-   - **Destination:** `/index.html`
-5. Click **Create Static Site**.
-
----
-
-## Core Institutional Features
-
-1. **USA Domestic Fedwire Banking (Inbound & Outbound):**
-   - Inbound Fedwire deposit registration with ABA routing number verification (`021000021`) and instant account credit.
-   - Outbound Fedwire disbursements with FinCEN compliance fields, real-time Fedwire reference generation (`FEDWIRE-XXXXXX`), and fee waivers.
-2. **Managed Client Portfolios & AUM Dashboard:**
-   - Real-money client account tracking ($410k+ AUM across Sovereign, Institutional Prime, Accredited, and Private Wealth mandates).
-   - High-Water Mark calculation, 2% management fee / 20% incentive fee tracking, and strategy allocation bridge.
-3. **Strategy Pre-Deployment Risk Guard:**
-   - Fiduciary risk gate requiring strategies to achieve a +10% profit hurdle within a 5% max daily risk budget and 10% trailing drawdown ceiling before live capital deployment.
-4. **Interactive Trading Terminal & Charting:**
-   - Multi-asset execution (Forex, US Equities, Commodities, Crypto) with candlestick charting, indicator overlays (SMA, EMA, Bollinger Bands, RSI), and pre-trade checklist logging.
-5. **Strategy Lab & Edge Analytics:**
-   - Isolated Win Rate %, Profit Factor, and mathematical expectancy calculation per setup rule tag.
-
----
-
-## Local Development
-
+## Run
 ```bash
-# Install dependencies
 npm install
-
-# Start Vite local development server
-npm run dev
-
-# Build production bundle
 npm run build
+ADMIN_PASSWORD=choose-one npm start   # http://localhost:3000
+npm run dev                           # Vite only; run the server separately for /api
 ```
+Nightly consistent backups (last 7) are written next to the database.
+
+## Upgrade note
+First start on an existing database converts old balances to cents. Old balances included client-synced P&L: review them before approving any withdrawal.

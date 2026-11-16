@@ -153,35 +153,67 @@ export const AdminDashboard: React.FC = () => {
       setMsg('Deposit added.'); setAmount(''); setNote(''); await load();
     } catch (err) { setMsg((err as Error).message); }
   };
-  const decide = async (id: number, action: 'approve' | 'reject') => { await api.adminWithdrawal(id, action); await load(); };
+  const decide = async (id: number, action: 'approve' | 'reject') => {
+    try {
+      await api.adminWithdrawal(id, action);
+      setMsg(action === 'approve' ? 'Withdrawal approved.' : 'Withdrawal rejected; funds returned.');
+    } catch (err) {
+      setMsg((err as Error).message);
+    }
+    await load();
+  };
+  const decideDeposit = async (id: number, action: 'approve' | 'reject') => {
+    try {
+      await api.adminDeposit(id, action);
+      setMsg(action === 'approve' ? 'Deposit confirmed and credited.' : 'Deposit notice rejected.');
+    } catch (err) {
+      setMsg((err as Error).message);
+    }
+    await load();
+  };
   const pending = tx.filter(t => t.kind === 'withdrawal' && t.status === 'pending');
+  const pendingDeposits = tx.filter(t => t.kind === 'deposit' && t.status === 'pending');
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 py-4">
-      <h1 className="text-2xl font-semibold text-[var(--text-primary)]">Admin</h1>
-      {msg && <p role="status" className="text-sm text-[var(--accent-brand)]">{msg}</p>}
+      <h1 className="text-2xl font-semibold text-[var(--text-primary)]">Admin Workstation</h1>
+      {msg && <p role="status" className="text-sm text-[var(--accent-brand)] font-semibold p-2 neo-inset rounded-lg">{msg}</p>}
 
       <section>
-        <h2 className="text-base font-semibold mb-3 text-[var(--text-primary)]">Add funds to an account</h2>
+        <h2 className="text-base font-semibold mb-3 text-[var(--text-primary)]">Direct Capital Credit (Server Ledger)</h2>
         <form onSubmit={credit} className="flex flex-wrap gap-3">
           <select value={userId} onChange={e => setUserId(e.target.value)} className={field + ' min-w-56'} aria-label="User">
             <option value="">Choose a user</option>
             {users.map(u => <option key={u.id} value={u.id} className="text-slate-900">{u.name} ({u.account_no})</option>)}
           </select>
           <input type="number" min="0" step="0.01" placeholder="Amount (USD)" value={amount} onChange={e => setAmount(e.target.value)} className={field + ' w-40'} aria-label="Amount" />
-          <input placeholder="Note (optional)" value={note} onChange={e => setNote(e.target.value)} className={field + ' flex-1 min-w-40'} aria-label="Note" />
-          <button className="rounded-lg bg-[var(--accent-brand)] px-4 py-2 text-sm font-semibold text-white hover:brightness-110">Add funds</button>
+          <input placeholder="Note / Reference (optional)" value={note} onChange={e => setNote(e.target.value)} className={field + ' flex-1 min-w-40'} aria-label="Note" />
+          <button className="rounded-lg bg-[var(--accent-brand)] px-4 py-2 text-sm font-semibold text-white hover:brightness-110 shadow-md">Add funds</button>
         </form>
       </section>
 
       <section>
-        <h2 className="text-base font-semibold mb-3 text-[var(--text-primary)]">Withdrawal requests ({pending.length})</h2>
-        {pending.length === 0 ? <p className="text-sm text-[var(--text-muted)]">No pending requests.</p> : pending.map(t => (
-          <div key={t.id} className="flex items-center justify-between border-b border-slate-400/20 py-2 text-sm text-[var(--text-secondary)]">
-            <span>{t.name} ({t.account_no}) requested {money(t.amount)}</span>
+        <h2 className="text-base font-semibold mb-3 text-[var(--text-primary)]">Wire Deposit Notices ({pendingDeposits.length})</h2>
+        <p className="text-xs text-[var(--text-muted)] mb-2">Approve only after the wire is confirmed received at the depository institution. Approval credits the client ledger.</p>
+        {pendingDeposits.length === 0 ? <p className="text-sm text-[var(--text-muted)]">No pending deposit notices.</p> : pendingDeposits.map(t => (
+          <div key={t.id} className="flex items-center justify-between border-b border-slate-400/20 py-2.5 text-sm text-[var(--text-secondary)]">
+            <span>{t.name} ({t.account_no}) reports {money(t.amount)} from {t.detail?.originatorName || 'unknown'} ({t.ref})</span>
             <span className="flex gap-2">
-              <button onClick={() => decide(t.id, 'approve')} className="rounded-md bg-emerald-600 px-3 py-1 text-white">Approve</button>
-              <button onClick={() => decide(t.id, 'reject')} className="rounded-md border border-slate-400/50 px-3 py-1">Reject</button>
+              <button onClick={() => decideDeposit(t.id, 'approve')} className="rounded-md bg-emerald-600 hover:bg-emerald-500 px-3 py-1 text-white font-medium text-xs">Confirm funds</button>
+              <button onClick={() => decideDeposit(t.id, 'reject')} className="rounded-md border border-slate-400/50 hover:bg-slate-700/30 px-3 py-1 text-xs">Reject</button>
+            </span>
+          </div>
+        ))}
+      </section>
+
+      <section>
+        <h2 className="text-base font-semibold mb-3 text-[var(--text-primary)]">Withdrawal Authorizations ({pending.length})</h2>
+        {pending.length === 0 ? <p className="text-sm text-[var(--text-muted)]">No pending withdrawal requests.</p> : pending.map(t => (
+          <div key={t.id} className="flex items-center justify-between border-b border-slate-400/20 py-2.5 text-sm text-[var(--text-secondary)]">
+            <span>{t.name} ({t.account_no}) requested {money(t.amount)} to {t.detail?.beneficiaryName} / {t.detail?.bankName}, ABA {t.detail?.routingNumber}, acct {t.detail?.accountNumber || '••••' + t.detail?.accountLast4} ({t.ref})</span>
+            <span className="flex gap-2">
+              <button onClick={() => decide(t.id, 'approve')} className="rounded-md bg-emerald-600 hover:bg-emerald-500 px-3 py-1 text-white font-medium text-xs">Approve</button>
+              <button onClick={() => decide(t.id, 'reject')} className="rounded-md border border-slate-400/50 hover:bg-slate-700/30 px-3 py-1 text-xs">Reject</button>
             </span>
           </div>
         ))}

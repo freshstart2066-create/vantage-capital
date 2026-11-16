@@ -1,5 +1,6 @@
-import React, { useState, useId } from 'react';
+import React, { useState, useId, useEffect } from 'react';
 import { useTrading } from '../../context/TradingContext';
+import { api } from '../../services/api';
 import {
   Landmark,
   X,
@@ -31,6 +32,8 @@ const COMMON_US_BANKS = [
 
 export const WithdrawalModal: React.FC<WithdrawalModalProps> = ({ isOpen, onClose }) => {
   const { account, user, withdrawalRequests, requestWireWithdrawal } = useTrading();
+  const [sandbox, setSandbox] = useState(false);
+  useEffect(() => { if (isOpen) api.config().then(c => setSandbox(c.sandbox)).catch(() => {}); }, [isOpen]);
 
   const [activeTab, setActiveTab] = useState<'request' | 'history'>('request');
 
@@ -38,7 +41,7 @@ export const WithdrawalModal: React.FC<WithdrawalModalProps> = ({ isOpen, onClos
   const [amount, setAmount] = useState<string>('2500');
   const [beneficiaryName, setBeneficiaryName] = useState<string>(user?.name || 'Alex Vance');
   const [bankName, setBankName] = useState<string>('JPMorgan Chase Bank, N.A.');
-  const [routingNumber, setRoutingNumber] = useState<string>('021000021');
+  const [routingNumber, setRoutingNumber] = useState<string>('');
   const [accountNumber, setAccountNumber] = useState<string>('9821401289');
   const [confirmAccountNumber, setConfirmAccountNumber] = useState<string>('9821401289');
   const [accountType, setAccountType] = useState<'CHECKING' | 'SAVINGS'>('CHECKING');
@@ -70,7 +73,7 @@ export const WithdrawalModal: React.FC<WithdrawalModalProps> = ({ isOpen, onClos
     setAmount(val.toString());
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
 
@@ -114,7 +117,7 @@ export const WithdrawalModal: React.FC<WithdrawalModalProps> = ({ isOpen, onClos
       return;
     }
 
-    const res = requestWireWithdrawal({
+    const res = await requestWireWithdrawal({
       amount: numAmount,
       beneficiaryName,
       bankName,
@@ -287,6 +290,11 @@ export const WithdrawalModal: React.FC<WithdrawalModalProps> = ({ isOpen, onClos
         {/* ======================================================== */}
         {!recentReceipt && activeTab === 'request' && (
           <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+            {sandbox && (
+              <div className="p-3 rounded-xl bg-amber-500/10 text-amber-300 text-xs border border-amber-500/30">
+                <b>Test mode.</b> No real money moves. Use routing number <span className="font-mono font-bold">110000000</span> and any 4-17 digit account number. The request moves from Pending to Processing to Completed automatically.
+              </div>
+            )}
             {errorMsg && (
               <div className="p-3 rounded-xl bg-rose-500/10 text-rose-400 text-xs font-semibold border border-rose-500/30 flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0" />
@@ -443,7 +451,7 @@ export const WithdrawalModal: React.FC<WithdrawalModalProps> = ({ isOpen, onClos
                     pattern="\d{9}"
                     required
                     aria-describedby={routingHintId}
-                    placeholder="021000021"
+                    placeholder="9-digit routing number"
                     value={routingNumber}
                     onChange={e => setRoutingNumber(e.target.value.replace(/\D/g, ''))}
                     className="neo-input text-xs py-2.5 font-mono"
@@ -652,6 +660,8 @@ export const WithdrawalModal: React.FC<WithdrawalModalProps> = ({ isOpen, onClos
                           className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-bold uppercase ${
                             req.status === 'SETTLED'
                               ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+                              : req.status === 'REJECTED'
+                              ? 'bg-rose-500/10 text-rose-400 border border-rose-500/30'
                               : req.status === 'DISPATCHED_TRANSFER'
                               ? 'bg-sky-500/10 text-sky-400 border border-sky-500/30'
                               : 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
@@ -659,6 +669,8 @@ export const WithdrawalModal: React.FC<WithdrawalModalProps> = ({ isOpen, onClos
                         >
                           {req.status === 'SETTLED'
                             ? 'Bank transfer Settled'
+                            : req.status === 'REJECTED'
+                            ? 'Rejected - funds returned'
                             : req.status === 'DISPATCHED_TRANSFER'
                             ? 'Dispatched to Fed'
                             : 'Pending Clearing'}

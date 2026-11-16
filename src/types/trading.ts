@@ -215,7 +215,7 @@ export interface WithdrawalRequest {
   beneficiaryAddress: string;
   wireMemo?: string;
   timestamp: number;
-  status: 'PROCESSING' | 'DISPATCHED_TRANSFER' | 'SETTLED';
+  status: 'PROCESSING' | 'DISPATCHED_TRANSFER' | 'SETTLED' | 'REJECTED';
   estimatedArrival: string;
 }
 
@@ -230,7 +230,7 @@ export interface DepositRequest {
   imadOmad?: string;
   wireMemo?: string;
   timestamp: number;
-  status: 'PENDING_CONFIRMATION' | 'SETTLED';
+  status: 'PENDING_CONFIRMATION' | 'PROCESSING' | 'SETTLED' | 'REJECTED';
 }
 
 export interface ManagedClient {

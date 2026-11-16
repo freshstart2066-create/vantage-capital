@@ -74,7 +74,7 @@ export const CompanyHome: React.FC = () => {
     },
     {
       q: 'How do deposits and withdrawals work for clients?',
-      a: 'Deposits are credited to your account by the Vantage team, and withdrawal requests are reviewed and processed by an administrator.',
+      a: 'To deposit, open Deposit, copy your personal account details, and send a bank transfer. The status moves from Pending to Processing to Completed, and your balance updates when it completes. Withdrawals follow the same steps.',
     },
     {
       q: 'Where do your market prices and execution liquidity originate?',

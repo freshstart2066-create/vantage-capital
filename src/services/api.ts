@@ -1,9 +1,15 @@
+// Client for the Vantage server with automatic offline/static-host fallback.
 const KEY = 'vantage_token';
 const USERS_KEY = 'vantage_local_users';
 const TX_KEY = 'vantage_local_tx';
 
-export const getToken = () => localStorage.getItem(KEY);
-export const clearToken = () => localStorage.removeItem(KEY);
+export const getToken = () => { try { return localStorage.getItem(KEY); } catch { return null; } };
+export const clearToken = () => { try { localStorage.removeItem(KEY); } catch { /* ignore */ } };
+
+export class ApiError extends Error {
+  status: number;
+  constructor(status: number, message: string) { super(message); this.status = status; }
+}
 
 export interface ApiUser {
   id: number;
@@ -30,6 +36,7 @@ export interface Report {
   byStrategy: Row[];
   byUser: Row[];
   totalTrades: number;
+  note?: string;
 }
 
 export interface Tx {
@@ -38,9 +45,11 @@ export interface Tx {
   amount: number;
   status: string;
   note: string;
+  ref?: string;
   created_at: number;
   name?: string;
   account_no?: string;
+  detail?: Record<string, string>;
 }
 
 export interface AdminUser {
@@ -51,6 +60,35 @@ export interface AdminUser {
   currency: string;
   balance: number;
   created_at: number;
+}
+
+export interface WithdrawParams {
+  amount: number;
+  beneficiaryName: string;
+  bankName: string;
+  routingNumber: string;
+  accountNumber: string;
+  accountType: 'CHECKING' | 'SAVINGS';
+  beneficiaryAddress: string;
+  wireMemo?: string;
+}
+
+export interface DepositNoticeParams {
+  amount: number;
+  senderBankName?: string;
+  memo?: string;
+}
+
+export interface DepositInfo {
+  sandbox: boolean;
+  beneficiary: string;
+  bankName: string;
+  routingNumber: string;
+  accountNumber: string;
+  accountType: string;
+  bankAddress: string;
+  reference: string;
+  processingSeconds: number;
 }
 
 // Local mock storage helpers for offline / static site fallback
@@ -76,7 +114,7 @@ const getLocalTx = (): Tx[] => {
   try {
     const raw = localStorage.getItem(TX_KEY);
     return raw ? JSON.parse(raw) : [
-      { id: 1, kind: 'deposit', amount: 50000, status: 'approved', note: 'Bank transfer Reference DEP-VC-89421', created_at: Date.now() - 3600000, name: 'Alex Vance', account_no: 'VC89421832' },
+      { id: 1, kind: 'deposit', amount: 50000, status: 'completed', note: 'Initial Bank Wire Capital Allocation', ref: 'DEP-INIT-001', created_at: Date.now() - 3600000, name: 'Alex Vance', account_no: 'VC89421832' },
     ];
   } catch {
     return [];
@@ -91,47 +129,45 @@ const saveLocalTx = (txs: Tx[]) => {
 
 async function call<T>(path: string, body?: unknown): Promise<T> {
   const t = getToken();
+  let res: Response;
   try {
-    const res = await fetch('/api' + path, {
+    res = await fetch('/api' + path, {
       method: body === undefined ? 'GET' : 'POST',
       headers: { 'Content-Type': 'application/json', ...(t ? { Authorization: 'Bearer ' + t } : {}) },
       body: body === undefined ? undefined : JSON.stringify(body),
     });
-
-    // If static hosting returns 404, HTML fallback, or non-JSON, detect as offline
-    const contentType = res.headers.get('content-type') || '';
-    if (res.status === 404 || contentType.includes('text/html') || !res.ok) {
-      throw new Error('API_OFFLINE');
-    }
-
-    const text = await res.text();
-    if (!text || !text.trim()) {
-      throw new Error('API_OFFLINE');
-    }
-
-    const data = JSON.parse(text);
-    if (!data || typeof data !== 'object') {
-      throw new Error('API_OFFLINE');
-    }
-    return data as T;
-  } catch (err: unknown) {
-    if (
-      (err as Error).message === 'API_OFFLINE' ||
-      (err as Error).message.includes('fetch') ||
-      (err as Error).name === 'SyntaxError'
-    ) {
-      throw new Error('API_OFFLINE');
-    }
-    throw err;
+  } catch {
+    throw new ApiError(0, 'API_OFFLINE');
   }
+
+  const contentType = res.headers.get('content-type') || '';
+  if (res.status === 404 || contentType.includes('text/html') || !res.ok) {
+    throw new ApiError(res.status, 'API_OFFLINE');
+  }
+
+  const text = await res.text();
+  if (!text || !text.trim()) {
+    throw new ApiError(res.status, 'API_OFFLINE');
+  }
+
+  let data: unknown;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    throw new ApiError(res.status, 'API_OFFLINE');
+  }
+
+  if (!data || typeof data !== 'object') {
+    throw new ApiError(res.status, 'API_OFFLINE');
+  }
+
+  return data as T;
 }
 
 const session = async (p: string, b: unknown) => {
   const r = await call<{ token?: string; user?: ApiUser }>(p, b);
-  if (!r || !r.user || !r.token) {
-    throw new Error('API_OFFLINE');
-  }
-  localStorage.setItem(KEY, r.token);
+  if (!r?.user || !r?.token) throw new ApiError(500, 'API_OFFLINE');
+  try { localStorage.setItem(KEY, r.token); } catch { /* ignore */ }
   return r.user;
 };
 
@@ -154,7 +190,7 @@ export const api = {
           joinedDate: Date.now(),
           country: 'United States',
         };
-        localStorage.setItem(KEY, 'mock_token_' + Date.now());
+        try { localStorage.setItem(KEY, 'mock_token_' + Date.now()); } catch {}
         return mockUser;
       }
       throw err;
@@ -189,7 +225,7 @@ export const api = {
           created_at: Date.now(),
         });
         saveLocalUsers(users);
-        localStorage.setItem(KEY, 'mock_token_' + Date.now());
+        try { localStorage.setItem(KEY, 'mock_token_' + Date.now()); } catch {}
         return mockUser;
       }
       throw err;
@@ -199,7 +235,7 @@ export const api = {
   me: async (): Promise<ApiUser> => {
     try {
       const res = await call<{ user?: ApiUser }>('/me');
-      if (!res?.user) throw new Error('API_OFFLINE');
+      if (!res?.user) throw new ApiError(500, 'API_OFFLINE');
       return res.user;
     } catch (err: unknown) {
       if ((err as Error).message === 'API_OFFLINE') {
@@ -220,34 +256,101 @@ export const api = {
     }
   },
 
-  adjust: async (delta: number) => {
+  transactions: async (): Promise<Tx[]> => {
     try {
-      return await call<{ balance: number }>('/account/adjust', { delta });
+      const res = await call<{ tx?: Tx[] }>('/transactions');
+      if (!res?.tx) throw new ApiError(500, 'API_OFFLINE');
+      return res.tx;
     } catch {
-      return { balance: 0 };
+      return getLocalTx();
     }
   },
 
-  withdrawalRequest: async (amount: number, note?: string) => {
+  config: async () => {
     try {
-      return await call('/withdrawal-request', { amount, note });
+      return await call<{ sandbox: boolean }>('/config');
     } catch {
-      return { ok: true };
+      return { sandbox: true };
+    }
+  },
+
+  depositInfo: async (): Promise<DepositInfo> => {
+    try {
+      return await call<DepositInfo>('/deposit-info');
+    } catch {
+      return {
+        sandbox: true,
+        beneficiary: 'Vantage Capital Asset Management LLC (Sandbox)',
+        bankName: 'Vantage Test Bank (Sandbox)',
+        routingNumber: '110000000',
+        accountNumber: '849201847102',
+        accountType: 'Checking',
+        bankAddress: '1 Wall Street, New York, NY 10005',
+        reference: 'DEP-VC-SANDBOX',
+        processingSeconds: 40,
+      };
+    }
+  },
+
+  withdraw: async (p: WithdrawParams): Promise<{ ok: true; referenceId: string; balance: number }> => {
+    try {
+      return await call<{ ok: true; referenceId: string; balance: number }>('/withdraw', p);
+    } catch (err: unknown) {
+      if ((err as Error).message === 'API_OFFLINE') {
+        const txs = getLocalTx();
+        const ref = 'TRANSFER-' + Math.floor(100000 + Math.random() * 900000);
+        txs.unshift({
+          id: Date.now(),
+          kind: 'withdrawal',
+          amount: p.amount,
+          status: 'pending',
+          note: p.wireMemo || 'Bank Transfer Withdrawal',
+          ref,
+          created_at: Date.now(),
+          name: p.beneficiaryName,
+        });
+        saveLocalTx(txs);
+        return { ok: true, referenceId: ref, balance: 0 };
+      }
+      throw err;
+    }
+  },
+
+  depositNotice: async (p: DepositNoticeParams): Promise<{ ok: true; referenceId: string }> => {
+    try {
+      return await call<{ ok: true; referenceId: string }>('/deposit-notice', p);
+    } catch (err: unknown) {
+      if ((err as Error).message === 'API_OFFLINE') {
+        const txs = getLocalTx();
+        const ref = 'DEP-' + Math.floor(100000 + Math.random() * 900000);
+        txs.unshift({
+          id: Date.now(),
+          kind: 'deposit',
+          amount: p.amount,
+          status: 'processing',
+          note: p.memo || 'Wire Deposit Reported',
+          ref,
+          created_at: Date.now(),
+        });
+        saveLocalTx(txs);
+        return { ok: true, referenceId: ref };
+      }
+      throw err;
     }
   },
 
   sendTrades: async (trades: unknown[]) => {
     try {
-      return await call('/trades', { trades });
+      return await call<{ ok: true; stored: number }>('/trades', { trades });
     } catch {
-      return { ok: true };
+      return { ok: true, stored: trades.length };
     }
   },
 
   adminReport: async (): Promise<Report> => {
     try {
       const res = await call<Report>('/admin/report');
-      if (!res || !Array.isArray(res.byStrategy)) throw new Error('API_OFFLINE');
+      if (!res || !Array.isArray(res.byStrategy)) throw new ApiError(500, 'API_OFFLINE');
       return res;
     } catch {
       return {
@@ -265,28 +368,10 @@ export const api = {
     }
   },
 
-  withdraw: async (amount: number, note?: string) => {
-    try {
-      return await call<{ balance: number }>('/withdraw', { amount, note });
-    } catch {
-      return { balance: 0 };
-    }
-  },
-
-  transactions: async (): Promise<Tx[]> => {
-    try {
-      const res = await call<{ tx?: Tx[] }>('/transactions');
-      if (!res || !Array.isArray(res.tx)) throw new Error('API_OFFLINE');
-      return res.tx;
-    } catch {
-      return getLocalTx();
-    }
-  },
-
   adminUsers: async (): Promise<AdminUser[]> => {
     try {
       const res = await call<{ users?: AdminUser[] }>('/admin/users');
-      if (!res || !Array.isArray(res.users)) throw new Error('API_OFFLINE');
+      if (!res?.users) throw new ApiError(500, 'API_OFFLINE');
       return res.users;
     } catch {
       return getLocalUsers();
@@ -296,7 +381,7 @@ export const api = {
   adminTx: async (): Promise<Tx[]> => {
     try {
       const res = await call<{ tx?: Tx[] }>('/admin/transactions');
-      if (!res || !Array.isArray(res.tx)) throw new Error('API_OFFLINE');
+      if (!res?.tx) throw new ApiError(500, 'API_OFFLINE');
       return res.tx;
     } catch {
       return getLocalTx();
@@ -305,7 +390,7 @@ export const api = {
 
   adminCredit: async (userId: number, amount: number, note: string) => {
     try {
-      return await call('/admin/credit', { userId, amount, note });
+      return await call<{ ok: true }>('/admin/credit', { userId, amount, note });
     } catch (err: unknown) {
       if ((err as Error).message === 'API_OFFLINE') {
         const users = getLocalUsers();
@@ -320,6 +405,7 @@ export const api = {
             amount,
             status: 'completed',
             note: note || 'Administrative Capital Allocation',
+            ref: 'CR-' + Math.floor(1000 + Math.random() * 9000),
             created_at: Date.now(),
             name: target.name,
             account_no: target.account_no,
@@ -334,12 +420,26 @@ export const api = {
 
   adminWithdrawal: async (id: number, action: 'approve' | 'reject') => {
     try {
-      return await call('/admin/withdrawal', { id, action });
+      return await call<{ ok: true }>('/admin/withdrawal', { id, action });
     } catch {
       const txs = getLocalTx();
       const target = txs.find(t => t.id === id);
       if (target) {
-        target.status = action === 'approve' ? 'approved' : 'rejected';
+        target.status = action === 'approve' ? 'completed' : 'rejected';
+        saveLocalTx(txs);
+      }
+      return { ok: true };
+    }
+  },
+
+  adminDeposit: async (id: number, action: 'approve' | 'reject') => {
+    try {
+      return await call<{ ok: true }>('/admin/deposit', { id, action });
+    } catch {
+      const txs = getLocalTx();
+      const target = txs.find(t => t.id === id);
+      if (target) {
+        target.status = action === 'approve' ? 'completed' : 'rejected';
         saveLocalTx(txs);
       }
       return { ok: true };
