@@ -98,15 +98,28 @@ async function call<T>(path: string, body?: unknown): Promise<T> {
       body: body === undefined ? undefined : JSON.stringify(body),
     });
 
-    if (res.status === 404) {
-      throw new Error('API_404_OFFLINE');
+    // If static hosting returns 404, HTML fallback, or non-JSON, detect as offline
+    const contentType = res.headers.get('content-type') || '';
+    if (res.status === 404 || contentType.includes('text/html') || !res.ok) {
+      throw new Error('API_OFFLINE');
     }
 
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.error || 'Request failed');
+    const text = await res.text();
+    if (!text || !text.trim()) {
+      throw new Error('API_OFFLINE');
+    }
+
+    const data = JSON.parse(text);
+    if (!data || typeof data !== 'object') {
+      throw new Error('API_OFFLINE');
+    }
     return data as T;
   } catch (err: unknown) {
-    if ((err as Error).message === 'API_404_OFFLINE' || (err as Error).message.includes('fetch')) {
+    if (
+      (err as Error).message === 'API_OFFLINE' ||
+      (err as Error).message.includes('fetch') ||
+      (err as Error).name === 'SyntaxError'
+    ) {
       throw new Error('API_OFFLINE');
     }
     throw err;
@@ -114,7 +127,10 @@ async function call<T>(path: string, body?: unknown): Promise<T> {
 }
 
 const session = async (p: string, b: unknown) => {
-  const r = await call<{ token: string; user: ApiUser }>(p, b);
+  const r = await call<{ token?: string; user?: ApiUser }>(p, b);
+  if (!r || !r.user || !r.token) {
+    throw new Error('API_OFFLINE');
+  }
   localStorage.setItem(KEY, r.token);
   return r.user;
 };
@@ -182,7 +198,9 @@ export const api = {
 
   me: async (): Promise<ApiUser> => {
     try {
-      return await call<{ user: ApiUser }>('/me').then(r => r.user);
+      const res = await call<{ user?: ApiUser }>('/me');
+      if (!res?.user) throw new Error('API_OFFLINE');
+      return res.user;
     } catch (err: unknown) {
       if ((err as Error).message === 'API_OFFLINE') {
         return {
@@ -228,7 +246,9 @@ export const api = {
 
   adminReport: async (): Promise<Report> => {
     try {
-      return await call<Report>('/admin/report');
+      const res = await call<Report>('/admin/report');
+      if (!res || !Array.isArray(res.byStrategy)) throw new Error('API_OFFLINE');
+      return res;
     } catch {
       return {
         totalTrades: 12,
@@ -255,7 +275,9 @@ export const api = {
 
   transactions: async (): Promise<Tx[]> => {
     try {
-      return await call<{ tx: Tx[] }>('/transactions').then(r => r.tx);
+      const res = await call<{ tx?: Tx[] }>('/transactions');
+      if (!res || !Array.isArray(res.tx)) throw new Error('API_OFFLINE');
+      return res.tx;
     } catch {
       return getLocalTx();
     }
@@ -263,7 +285,9 @@ export const api = {
 
   adminUsers: async (): Promise<AdminUser[]> => {
     try {
-      return await call<{ users: AdminUser[] }>('/admin/users').then(r => r.users);
+      const res = await call<{ users?: AdminUser[] }>('/admin/users');
+      if (!res || !Array.isArray(res.users)) throw new Error('API_OFFLINE');
+      return res.users;
     } catch {
       return getLocalUsers();
     }
@@ -271,7 +295,9 @@ export const api = {
 
   adminTx: async (): Promise<Tx[]> => {
     try {
-      return await call<{ tx: Tx[] }>('/admin/transactions').then(r => r.tx);
+      const res = await call<{ tx?: Tx[] }>('/admin/transactions');
+      if (!res || !Array.isArray(res.tx)) throw new Error('API_OFFLINE');
+      return res.tx;
     } catch {
       return getLocalTx();
     }
