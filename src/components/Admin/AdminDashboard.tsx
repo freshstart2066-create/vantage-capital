@@ -6,7 +6,7 @@ const money = (n: number) => n.toLocaleString('en-US', { style: 'currency', curr
 const field = 'rounded-lg border border-slate-400/40 bg-transparent px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent-brand)]';
 
 export const AdminDashboard: React.FC = () => {
-  const { user } = useTrading();
+  const { user, setActiveTab } = useTrading();
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [tx, setTx] = useState<Tx[]>([]);
   const [userId, setUserId] = useState('');
@@ -20,7 +20,22 @@ export const AdminDashboard: React.FC = () => {
   }, []);
   useEffect(() => { if (user?.role === 'admin') void load(); }, [user, load]);
 
-  if (user?.role !== 'admin') return <p className="p-8 text-sm text-[var(--text-muted)]">This page is for administrators.</p>;
+  if (user?.role !== 'admin') {
+    return (
+      <div className="max-w-md mx-auto my-16 p-8 neo-box rounded-2xl text-center space-y-4">
+        <h2 className="text-lg font-bold text-[var(--text-primary)]">Administrator Access Required</h2>
+        <p className="text-sm text-[var(--text-muted)]">
+          You must be signed in with an administrative workstation account to access the firm allocation controller and strategy reports.
+        </p>
+        <button
+          onClick={() => setActiveTab('auth')}
+          className="neo-btn neo-btn-primary px-5 py-2.5 text-xs font-bold rounded-xl"
+        >
+          Go to Sign In
+        </button>
+      </div>
+    );
+  }
 
   const credit = async (e: React.FormEvent) => {
     e.preventDefault();
