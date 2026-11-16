@@ -20,8 +20,9 @@ const MainLayout: React.FC = () => {
   const { activeTab, setActiveTab, user, toastMessage, clearToast } = useTrading();
 
   // If user is not authenticated and attempts to view private institutional trading views, redirect to auth!
+  // Note: 'admin' renders its own dedicated administrative access portal right at /admin!
   useEffect(() => {
-    const publicTabs = ['auth', 'home', 'company', 'compliance', 'markets', 'calendar'];
+    const publicTabs = ['auth', 'home', 'company', 'compliance', 'markets', 'calendar', 'admin'];
     if (!user && !publicTabs.includes(activeTab)) {
       setActiveTab('auth');
     }

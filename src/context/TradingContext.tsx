@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useRef, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import type {
   Instrument,
   Position,
@@ -230,18 +230,91 @@ function playTradingSound(type: 'buy' | 'sell' | 'close' | 'win' | 'alert') {
 
 import { clearToken } from '../services/api';
 
+export const tabToPath = (tab: ActiveTab): string => {
+  switch (tab) {
+    case 'admin': return '/admin';
+    case 'terminal': return '/terminal';
+    case 'strategy_lab': return '/strategy-lab';
+    case 'calendar': return '/calendar';
+    case 'markets': return '/markets';
+    case 'company': return '/about';
+    case 'compliance': return '/compliance';
+    case 'settings': return '/settings';
+    case 'profile': return '/profile';
+    case 'auth': return '/login';
+    case 'home': return '/';
+    default: return '/';
+  }
+};
+
+export const pathToTab = (pathname: string): ActiveTab | null => {
+  const clean = pathname.replace(/\/+$/, '').toLowerCase();
+  if (clean === '/admin' || clean.startsWith('/admin')) return 'admin';
+  if (clean === '/terminal') return 'terminal';
+  if (clean === '/strategy-lab' || clean === '/strategy_lab') return 'strategy_lab';
+  if (clean === '/calendar') return 'calendar';
+  if (clean === '/markets') return 'markets';
+  if (clean === '/about' || clean === '/company') return 'company';
+  if (clean === '/compliance' || clean === '/legal') return 'compliance';
+  if (clean === '/settings') return 'settings';
+  if (clean === '/profile') return 'profile';
+  if (clean === '/login' || clean === '/auth' || clean === '/signin') return 'auth';
+  return null;
+};
+
 export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // 1. Initial State from localStorage
+  // 1. Initial State from localStorage & URL route
   const [instruments, setInstruments] = useState<Instrument[]>(INITIAL_INSTRUMENTS);
   const [activeSymbol, setActiveSymbol] = useState<string>('EUR/USD');
   const [timeframe, setTimeframe] = useState<Timeframe>('5M');
-  const [activeTab, setActiveTab] = useState<ActiveTab>(() => {
+  const [activeTab, setActiveTabState] = useState<ActiveTab>(() => {
+    if (typeof window !== 'undefined') {
+      const fromUrl = pathToTab(window.location.pathname);
+      if (fromUrl) return fromUrl;
+    }
     try {
       const savedUser = localStorage.getItem(STORAGE_KEYS.USER);
       if (savedUser) return 'terminal';
     } catch {}
     return 'auth'; // Login screen is the FIRST to be seen!
   });
+
+  // URL-synchronized tab switcher
+  const setActiveTab = useCallback((tab: ActiveTab) => {
+    setActiveTabState(tab);
+    if (typeof window !== 'undefined') {
+      const targetPath = tabToPath(tab);
+      if (window.location.pathname !== targetPath) {
+        window.history.pushState({ tab }, '', targetPath);
+      }
+    }
+  }, []);
+
+  // Listen to browser Back/Forward navigation
+  useEffect(() => {
+    const onPopState = () => {
+      const fromUrl = pathToTab(window.location.pathname);
+      if (fromUrl) {
+        setActiveTabState(fromUrl);
+      } else {
+        const saved = localStorage.getItem(STORAGE_KEYS.USER);
+        setActiveTabState(saved ? 'terminal' : 'auth');
+      }
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+
+  // Ensure initial URL reflects current view
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const currentTabFromUrl = pathToTab(window.location.pathname);
+      if (!currentTabFromUrl) {
+        const targetPath = tabToPath(activeTab);
+        window.history.replaceState({ tab: activeTab }, '', targetPath);
+      }
+    }
+  }, [activeTab]);
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
   const [slippageEnabled, setSlippageEnabled] = useState<boolean>(true);
   const [liveFeedConnected, setLiveFeedConnected] = useState<boolean>(false);

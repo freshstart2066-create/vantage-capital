@@ -215,14 +215,25 @@ export const Header: React.FC = () => {
               </button>
 
               {/* Firm Owner / Admin Capital Allocation Controller Button */}
-              <button
-                onClick={() => setActiveTab('admin')}
-                className="neo-btn py-1.5 px-2.5 text-xs font-bold text-amber-400 border border-amber-500/30 hover:border-amber-500/60 flex items-center gap-1.5"
-                title="Firm Owner Capital Allocation Controller"
-              >
-                <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
-                <span className="hidden sm:inline">Allocate Capital</span>
-              </button>
+              {user.role === 'admin' ? (
+                <button
+                  onClick={() => setActiveTab('admin')}
+                  className="neo-btn py-1.5 px-2.5 text-xs font-bold text-amber-400 border border-amber-500/40 hover:border-amber-500/80 flex items-center gap-1.5"
+                  title="Firm Administrator Dashboard (/admin)"
+                >
+                  <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="hidden sm:inline">Admin Dashboard</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => setActiveTab('admin')}
+                  className="neo-btn py-1.5 px-2.5 text-xs font-bold text-amber-400/70 hover:text-amber-400 border border-amber-500/20 hover:border-amber-500/60 flex items-center gap-1.5"
+                  title="Firm Allocation Portal (/admin)"
+                >
+                  <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="hidden sm:inline">Allocate Capital</span>
+                </button>
+              )}
             </>
           ) : (
             <div className="flex items-center gap-2">
@@ -235,11 +246,11 @@ export const Header: React.FC = () => {
               </button>
               <button
                 onClick={() => setActiveTab('admin')}
-                className="neo-btn py-1.5 px-2.5 text-xs font-semibold text-amber-400 border border-amber-500/30 hover:border-amber-500/60 flex items-center gap-1.5"
-                title="Firm Owner Capital Allocation Controller"
+                className="neo-btn py-1.5 px-2.5 text-xs font-medium text-amber-400/80 hover:text-amber-400 border border-amber-500/20 hover:border-amber-500/60 flex items-center gap-1.5"
+                title="Firm Administration (/admin)"
               >
                 <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
-                <span className="hidden sm:inline">Admin Allocation</span>
+                <span className="hidden sm:inline">Admin</span>
               </button>
             </div>
           )}
