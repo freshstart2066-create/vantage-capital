@@ -359,7 +359,7 @@ export const ProfilePage: React.FC = () => {
                 { label: '$10,000', amount: 10000, name: 'Private Wealth ($10,000)' },
                 { label: '$50,000', amount: 50000, name: 'Accredited Portfolio ($50,000)' },
                 { label: '$100,000', amount: 100000, name: 'Institutional Prime ($100,000)' },
-                { label: '$250,000', amount: 250000, name: 'Sovereign Mandate ($250,000)' },
+                { label: '$250,000', amount: 250000, name: 'Deposit $250,000' },
               ].map(t => (
                 <button
                   key={t.amount}

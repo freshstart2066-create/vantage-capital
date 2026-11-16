@@ -181,6 +181,7 @@ export interface ReplayState {
 
 export interface UserProfile {
   id: string;
+  role?: 'user' | 'admin';
   name: string;
   email: string;
   phone?: string;
@@ -248,6 +249,7 @@ export interface ManagedClient {
 }
 
 export type ActiveTab =
+  | 'admin'
   | 'auth'
   | 'home'
   | 'terminal'

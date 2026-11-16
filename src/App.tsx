@@ -12,6 +12,8 @@ import { CompanyHome } from './components/Home/CompanyHome';
 import { EconomicCalendar } from './components/Calendar/EconomicCalendar';
 import { AuthPage } from './components/Auth/AuthPage';
 import { ProfilePage } from './components/Profile/ProfilePage';
+import { AdminDashboard } from './components/Admin/AdminDashboard';
+import { SyncAgent } from './services/SyncAgent';
 import { CheckCircle2, AlertTriangle, Info, X } from 'lucide-react';
 
 const MainLayout: React.FC = () => {
@@ -38,6 +40,7 @@ const MainLayout: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col bg-[var(--bg-primary)] text-[var(--text-primary)] transition-colors duration-200">
       {/* Platform Header */}
+      <SyncAgent />
       <Header />
 
       {/* Main Content Workspace */}
@@ -52,6 +55,7 @@ const MainLayout: React.FC = () => {
         {activeTab === 'compliance' && <ComplianceDisclaimers />}
         {activeTab === 'settings' && <SettingsView />}
         {activeTab === 'profile' && <ProfilePage />}
+        {activeTab === 'admin' && <AdminDashboard />}
       </main>
 
       {/* Floating Neomorphic Notification Toast */}

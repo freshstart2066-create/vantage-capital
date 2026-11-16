@@ -228,6 +228,8 @@ function playTradingSound(type: 'buy' | 'sell' | 'close' | 'win' | 'alert') {
   }
 }
 
+import { clearToken } from '../services/api';
+
 export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // 1. Initial State from localStorage
   const [instruments, setInstruments] = useState<Instrument[]>(INITIAL_INSTRUMENTS);
@@ -1575,6 +1577,7 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   // Sign Out Action
   const signOut = () => {
+    clearToken();
     setUser(null);
     try {
       localStorage.removeItem(STORAGE_KEYS.USER);

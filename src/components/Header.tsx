@@ -25,7 +25,6 @@ import {
 } from 'lucide-react';
 import { WithdrawalModal } from './Withdrawal/WithdrawalModal';
 import { DepositModal } from './Deposit/DepositModal';
-import { AdminAllocationModal } from './Admin/AdminAllocationModal';
 
 export const Header: React.FC = () => {
   const {
@@ -44,7 +43,6 @@ export const Header: React.FC = () => {
   const [utcTime, setUtcTime] = useState<string>('');
   const [isWithdrawOpen, setIsWithdrawOpen] = useState<boolean>(false);
   const [isDepositOpen, setIsDepositOpen] = useState<boolean>(false);
-  const [isAdminOpen, setIsAdminOpen] = useState<boolean>(false);
 
   useEffect(() => {
     const updateTime = () => {
@@ -218,7 +216,7 @@ export const Header: React.FC = () => {
 
               {/* Firm Owner / Admin Capital Allocation Controller Button */}
               <button
-                onClick={() => setIsAdminOpen(true)}
+                onClick={() => setActiveTab('admin')}
                 className="neo-btn py-1.5 px-2.5 text-xs font-bold text-amber-400 border border-amber-500/30 hover:border-amber-500/60 flex items-center gap-1.5"
                 title="Firm Owner Capital Allocation Controller"
               >
@@ -236,7 +234,7 @@ export const Header: React.FC = () => {
                 <span>Sign In / Register</span>
               </button>
               <button
-                onClick={() => setIsAdminOpen(true)}
+                onClick={() => setActiveTab('admin')}
                 className="neo-btn py-1.5 px-2.5 text-xs font-semibold text-amber-400 border border-amber-500/30 hover:border-amber-500/60 flex items-center gap-1.5"
                 title="Firm Owner Capital Allocation Controller"
               >
@@ -285,7 +283,6 @@ export const Header: React.FC = () => {
       {/* USA Domestic Wire Inbound & Outbound Modals + Admin Capital Allocator */}
       <WithdrawalModal isOpen={isWithdrawOpen} onClose={() => setIsWithdrawOpen(false)} />
       <DepositModal isOpen={isDepositOpen} onClose={() => setIsDepositOpen(false)} />
-      <AdminAllocationModal isOpen={isAdminOpen} onClose={() => setIsAdminOpen(false)} />
     </header>
   );
 };

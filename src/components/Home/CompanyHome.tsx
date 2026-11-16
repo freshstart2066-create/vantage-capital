@@ -48,7 +48,7 @@ export const CompanyHome: React.FC = () => {
       recommended: false,
     },
     {
-      name: 'Sovereign & Family Office Fund',
+      name: 'Managed Strategy Account',
       capital: '$250,000',
       target: '+10% ($25,000)',
       dailyLoss: '5% ($12,500)',
@@ -70,11 +70,11 @@ export const CompanyHome: React.FC = () => {
     },
     {
       q: 'How does the firm manage and safeguard client funds?',
-      a: 'Client capital is managed under strict institutional fiduciary mandates. Funds are segregated at top-tier US commercial banks, and domestic wire disbursements are cleared through the Federal Reserve Fedwire Direct system. Every live strategy operates with hard daily loss stops and maximum drawdown boundaries.',
+      a: 'Client capital is managed under strict institutional fiduciary mandates. Every live strategy operates with hard daily loss stops and maximum drawdown boundaries.',
     },
     {
       q: 'How do deposits and withdrawals work for clients?',
-      a: 'Vantage Capital processes real-money client disbursements and deposits through USA Domestic Fedwire transfers, requiring standard ABA routing transit numbers and commercial bank account verification with same-day settlement.',
+      a: 'Deposits are credited to your account by the Vantage team, and withdrawal requests are reviewed and processed by an administrator.',
     },
     {
       q: 'Where do your market prices and execution liquidity originate?',
@@ -130,7 +130,7 @@ export const CompanyHome: React.FC = () => {
           </span>
           <span className="flex items-center gap-1.5">
             <Landmark className="w-4 h-4 text-emerald-400" />
-            USA Fedwire Direct Settlement
+            Fast account funding
           </span>
           <span className="flex items-center gap-1.5">
             <ShieldCheck className="w-4 h-4 text-sky-400" />
