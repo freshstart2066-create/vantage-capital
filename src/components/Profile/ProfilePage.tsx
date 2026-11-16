@@ -1,3 +1,4 @@
+import { api } from '../../services/api';
 import React, { useState } from 'react';
 import { useTrading } from '../../context/TradingContext';
 import { WithdrawalModal } from '../Withdrawal/WithdrawalModal';
@@ -36,7 +37,7 @@ export const ProfilePage: React.FC = () => {
   const [isWithdrawOpen, setIsWithdrawOpen] = useState<boolean>(false);
 
   // Edit Profile Form State
-  const [name, setName] = useState<string>(user?.name || 'Alex Vance');
+  const [name, setName] = useState<string>(user?.name || '');
   const [email, setEmail] = useState<string>(user?.email || 'alex.vance@vantagecapital.demo');
   const [phone, setPhone] = useState<string>(user?.phone || '+1 (212) 849-2041');
   const [strategyFocus, setStrategyFocus] = useState<string>(user?.strategyFocus || 'Price Action & Breakouts');
@@ -82,15 +83,20 @@ export const ProfilePage: React.FC = () => {
     });
   };
 
-  const handlePasswordSubmit = (e: React.FormEvent) => {
+  const [passwordError, setPasswordError] = useState<string>('');
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentPassword || !newPassword) return;
-    setPasswordSuccess(true);
-    setTimeout(() => {
-      setPasswordSuccess(false);
+    setPasswordError('');
+    try {
+      await api.changePassword(currentPassword, newPassword);
+      setPasswordSuccess(true);
       setCurrentPassword('');
       setNewPassword('');
-    }, 3000);
+      setTimeout(() => setPasswordSuccess(false), 3000);
+    } catch (err) {
+      setPasswordError((err as Error).message);
+    }
   };
 
   return (
@@ -593,6 +599,7 @@ export const ProfilePage: React.FC = () => {
               Change Workstation Password
             </h3>
 
+            {passwordError && <p role="alert" className="text-xs font-semibold text-[var(--accent-short)]">{passwordError}</p>}
             {passwordSuccess && (
               <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-400 text-xs font-semibold border border-emerald-500/30 flex items-center gap-2 animate-fadeIn">
                 <CheckCircle2 className="w-4 h-4 shrink-0" />

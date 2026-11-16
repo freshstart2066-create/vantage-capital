@@ -97,6 +97,9 @@ interface TradingContextType {
   setActiveInstrument: (symbol: string) => void;
   setTimeframe: (tf: Timeframe) => void;
   setActiveTab: (tab: ActiveTab) => void;
+  authMode: 'signin' | 'signup';
+  setAuthMode: (m: 'signin' | 'signup') => void;
+  openAuth: (m: 'signin' | 'signup') => void;
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
   toggleSound: () => void;
   toggleSlippage: () => void;
@@ -281,7 +284,7 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const savedUser = localStorage.getItem(STORAGE_KEYS.USER);
       if (savedUser) return 'terminal';
     } catch {}
-    return 'auth'; // Login screen is the FIRST to be seen!
+    return 'home'; // Logged-out visitors land on the public company overview
   });
 
   // URL-synchronized tab switcher
@@ -294,6 +297,12 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       }
     }
   }, []);
+
+  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
+  const openAuth = useCallback((m: 'signin' | 'signup') => {
+    setAuthMode(m);
+    setActiveTab('auth');
+  }, [setActiveTab]);
 
   // Listen to browser Back/Forward navigation
   useEffect(() => {
@@ -1961,6 +1970,9 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
         setActiveInstrument: setActiveSymbol,
         setTimeframe,
         setActiveTab,
+        authMode,
+        setAuthMode,
+        openAuth,
         setTheme,
         toggleSound: () => setSoundEnabled(prev => !prev),
         toggleSlippage: () => setSlippageEnabled(prev => !prev),

@@ -38,17 +38,15 @@ export const WithdrawalModal: React.FC<WithdrawalModalProps> = ({ isOpen, onClos
   const [activeTab, setActiveTab] = useState<'request' | 'history'>('request');
 
   // Wire Transfer Form Fields
-  const [amount, setAmount] = useState<string>('2500');
-  const [beneficiaryName, setBeneficiaryName] = useState<string>(user?.name || 'Alex Vance');
-  const [bankName, setBankName] = useState<string>('JPMorgan Chase Bank, N.A.');
+  const [amount, setAmount] = useState<string>('');
+  const [beneficiaryName, setBeneficiaryName] = useState<string>(user?.name || '');
+  const [bankName, setBankName] = useState<string>('');
   const [routingNumber, setRoutingNumber] = useState<string>('');
-  const [accountNumber, setAccountNumber] = useState<string>('9821401289');
-  const [confirmAccountNumber, setConfirmAccountNumber] = useState<string>('9821401289');
+  const [accountNumber, setAccountNumber] = useState<string>('');
+  const [confirmAccountNumber, setConfirmAccountNumber] = useState<string>('');
   const [accountType, setAccountType] = useState<'CHECKING' | 'SAVINGS'>('CHECKING');
-  const [beneficiaryAddress, setBeneficiaryAddress] = useState<string>(
-    '383 Madison Ave, New York, NY 10017'
-  );
-  const [wireMemo, setWireMemo] = useState<string>('Capital Performance Distribution');
+  const [beneficiaryAddress, setBeneficiaryAddress] = useState<string>('');
+  const [wireMemo, setWireMemo] = useState<string>('');
 
   // Submission State
   const [errorMsg, setErrorMsg] = useState<string>('');
@@ -152,14 +150,14 @@ export const WithdrawalModal: React.FC<WithdrawalModalProps> = ({ isOpen, onClos
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-base sm:text-lg font-bold text-[var(--text-primary)]">
-                  USA Domestic Wire Transfer Withdrawal
+                  Withdraw funds
                 </h2>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-bold">
                   Bank transfer Direct
                 </span>
               </div>
               <p className="text-xs text-[var(--text-muted)] mt-0.5">
-                Capital payout dispatched directly via the Federal Reserve National Settlement Service
+                Send money to your bank account.
               </p>
             </div>
           </div>
@@ -307,7 +305,7 @@ export const WithdrawalModal: React.FC<WithdrawalModalProps> = ({ isOpen, onClos
               <div className="flex items-center justify-between text-xs font-bold text-[var(--text-secondary)]">
                 <label htmlFor="wire-amount" className="flex items-center gap-1.5">
                   <DollarSign className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Withdrawal Capital Amount ($ USD)</span>
+                  <span>Amount (USD)</span>
                 </label>
                 <span className="text-[11px] font-mono text-[var(--text-muted)]">
                   Min: $100.00 USD
@@ -324,7 +322,7 @@ export const WithdrawalModal: React.FC<WithdrawalModalProps> = ({ isOpen, onClos
                   name="amount"
                   inputMode="decimal"
                   required
-                  placeholder="2500"
+                  placeholder="0.00"
                   value={amount}
                   onChange={e => setAmount(e.target.value.replace(/[^0-9.]/g, ''))}
                   className="neo-input pl-8 py-2.5 text-base font-bold font-mono text-[var(--text-primary)]"
@@ -355,7 +353,7 @@ export const WithdrawalModal: React.FC<WithdrawalModalProps> = ({ isOpen, onClos
             <div className="space-y-3">
               <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] flex items-center gap-1.5">
                 <Building className="w-3.5 h-3.5 text-[var(--accent-brand)]" />
-                USA Domestic Beneficiary Bank Account Information
+                Your bank account
               </h3>
 
               {/* Beneficiary Name */}
@@ -373,7 +371,7 @@ export const WithdrawalModal: React.FC<WithdrawalModalProps> = ({ isOpen, onClos
                   name="beneficiary"
                   autoComplete="name"
                   required
-                  placeholder="e.g. Alex Vance"
+                  placeholder="Full name on the bank account"
                   value={beneficiaryName}
                   onChange={e => setBeneficiaryName(e.target.value)}
                   className="neo-input text-xs py-2.5 font-sans"

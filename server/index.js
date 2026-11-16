@@ -164,7 +164,7 @@ const pub = u => ({ id: u.id, email: u.email, name: u.name, country: u.country, 
 const txOut = (t, admin = false) => {
   let detail = t.detail ? JSON.parse(t.detail) : undefined;
   if (detail) { const { accountEnc, ...rest } = detail; detail = admin && accountEnc ? { ...rest, accountNumber: dec(accountEnc) } : rest; }
-  return { id: t.id, kind: t.kind, amount: dollars(t.amount_cents), status: t.status, note: t.note, ref: t.ref, created_at: t.created_at, name: t.name, account_no: t.account_no, detail };
+  return { id: t.id, user_id: t.user_id, kind: t.kind, amount: dollars(t.amount_cents), status: t.status, note: t.note, ref: t.ref, created_at: t.created_at, name: t.name, account_no: t.account_no, detail };
 };
 class HttpError extends Error { constructor(code, msg) { super(msg); this.code = code; } }
 const SEC = {
@@ -243,6 +243,17 @@ async function api(req, res, p) {
 
   if (p === '/api/me') return send(res, 200, { user: pub(me) });
 
+  if (p === '/api/change-password') {
+    if (!POST) throw new HttpError(405, 'Method not allowed.');
+    if (!hit('pw|' + me.id, 5, 9e5)) throw new HttpError(429, 'Too many attempts. Try again later.');
+    const cur = typeof b.currentPassword === 'string' ? b.currentPassword : '', next = typeof b.newPassword === 'string' ? b.newPassword : '';
+    if (next.length < 8 || next.length > 200) throw new HttpError(400, 'New password must be at least 8 characters.');
+    if (!safeEq(await hashPw(cur, me.salt), me.hash)) throw new HttpError(401, 'Current password is incorrect.');
+    const salt = crypto.randomBytes(16).toString('hex');
+    db.prepare('UPDATE users SET salt=?, hash=? WHERE id=?').run(salt, await hashPw(next, salt), me.id);
+    return send(res, 200, { ok: true });
+  }
+
   if (p === '/api/deposit-info') {
     return send(res, 200, { sandbox: SANDBOX, beneficiary: TEST_BANK.beneficiary, bankName: TEST_BANK.bankName, routingNumber: TEST_BANK.routing,
       accountNumber: depositAcct(me), accountType: TEST_BANK.accountType, bankAddress: TEST_BANK.address, reference: me.account_no, processingSeconds: Math.round(DELAY / 1000) });
@@ -307,6 +318,14 @@ async function api(req, res, p) {
   if (!p.startsWith('/api/admin/') || me.role !== 'admin') throw new HttpError(403, 'Not allowed.');
 
   if (p === '/api/admin/users') return send(res, 200, { users: db.prepare("SELECT id,name,email,account_no,currency,balance_cents,created_at FROM users WHERE role='user' ORDER BY id DESC").all().map(u => ({ id: u.id, name: u.name, email: u.email, account_no: u.account_no, currency: u.currency, balance: dollars(u.balance_cents), created_at: u.created_at })) });
+  if (p === '/api/admin/user-tx') { // one client's full ledger history (admin view)
+    if (!POST) throw new HttpError(405, 'Method not allowed.');
+    const uid = Number(b.id);
+    const u = db.prepare("SELECT id,name,email,account_no,currency,balance_cents,country,created_at FROM users WHERE id=? AND role='user'").get(uid);
+    if (!u) throw new HttpError(404, 'User not found.');
+    const rows = db.prepare('SELECT tx.*, users.name, users.account_no FROM tx JOIN users ON users.id=tx.user_id WHERE tx.user_id=? ORDER BY tx.id DESC LIMIT 100').all(uid);
+    return send(res, 200, { user: { id: u.id, name: u.name, email: u.email, account_no: u.account_no, currency: u.currency, country: u.country, balance: dollars(u.balance_cents), created_at: u.created_at }, tx: rows.map(t => txOut(t, true)) });
+  }
   if (p === '/api/admin/transactions') return send(res, 200, { tx: db.prepare('SELECT tx.*, users.name, users.account_no FROM tx JOIN users ON users.id=tx.user_id ORDER BY tx.id DESC LIMIT 200').all().map(t => txOut(t, true)) });
   if (p === '/api/admin/report') {
     const rows = db.prepare('SELECT trades.tag, trades.pnl, users.name FROM trades JOIN users ON users.id=trades.user_id').all();
@@ -330,6 +349,29 @@ async function api(req, res, p) {
       db.prepare("INSERT INTO tx(user_id,kind,amount,amount_cents,status,note,ref,decided_by,created_at) VALUES(?,?,?,?,?,?,?,?,?)").run(uid, 'deposit', dollars(c), c, 'completed', str(b.note, 140) || 'Admin credit', refNo('ADM'), me.id, Date.now());
     });
     return send(res, 200, { ok: true });
+  }
+
+  if (p === '/api/admin/debit') { // reduce a client's balance; never below zero; always leaves an auditable ledger entry
+    const c = toCents(b.amount), uid = Number(b.userId), note = str(b.note, 140);
+    if (!c || !Number.isInteger(uid)) throw new HttpError(400, 'Pick a user and enter an amount above zero.');
+    if (!note) throw new HttpError(400, 'A reason is required for every balance reduction.');
+    tx(() => {
+      const u = db.prepare("SELECT balance_cents FROM users WHERE id=? AND role='user'").get(uid);
+      if (!u) throw new HttpError(400, 'User not found.');
+      if (u.balance_cents < c) throw new HttpError(400, `Balance is only $${dollars(u.balance_cents).toFixed(2)}. A balance cannot go below zero.`);
+      db.prepare('UPDATE users SET balance_cents=balance_cents-? WHERE id=?').run(c, uid);
+      db.prepare("INSERT INTO tx(user_id,kind,amount,amount_cents,status,note,ref,decided_by,created_at) VALUES(?,?,?,?,?,?,?,?,?)").run(uid, 'adjustment', dollars(c), c, 'completed', note, refNo('DBT'), me.id, Date.now());
+    });
+    return send(res, 200, { ok: true });
+  }
+
+  if (p === '/api/admin/reset-password') { // support tool: sets a one-time temporary password the admin passes on to the client
+    const uid = Number(b.userId);
+    if (!db.prepare("SELECT 1 FROM users WHERE id=? AND role='user'").get(uid)) throw new HttpError(404, 'User not found.');
+    const temp = crypto.randomBytes(9).toString('base64url');
+    const salt = crypto.randomBytes(16).toString('hex');
+    db.prepare('UPDATE users SET salt=?, hash=? WHERE id=?').run(salt, await hashPw(temp, salt), uid);
+    return send(res, 200, { ok: true, temporaryPassword: temp });
   }
 
   if (p === '/api/admin/withdrawal' || p === '/api/admin/deposit') {

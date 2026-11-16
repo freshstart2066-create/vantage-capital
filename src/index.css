@@ -120,10 +120,10 @@
   }
 }
 
+/* NOTE: do not reset margin/padding here. Tailwind's preflight already does it inside a CSS layer,
+   and an unlayered reset would override every spacing utility (p-4, gap, px-3...). */
 * {
   box-sizing: border-box;
-  margin: 0;
-  padding: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -138,6 +138,7 @@ body {
 }
 
 /* Custom Neomorphic utility classes */
+@layer components {
 .neo-box {
   background-color: var(--bg-surface);
   box-shadow: var(--shadow-extruded);
@@ -304,4 +305,6 @@ body {
 
 .flash-down {
   animation: flashRed 0.6s ease-out;
+}
+
 }

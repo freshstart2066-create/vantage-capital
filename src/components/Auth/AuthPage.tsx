@@ -41,10 +41,9 @@ const BrandPanel: React.FC = () => (
 );
 
 export const AuthPage: React.FC = () => {
-  const { signIn, signUp, updateUserProfile, setActiveTab, user } = useTrading();
+  const { signIn, signUp, updateUserProfile, setActiveTab, user, authMode: mode, setAuthMode: setMode } = useTrading();
   const [busy, setBusy] = useState(false);
 
-  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
 
@@ -207,28 +206,6 @@ export const AuthPage: React.FC = () => {
               <button type="submit" disabled={busy} className={primaryBtn + ' disabled:opacity-60'}>
                 {busy ? 'Signing in…' : 'Sign in'} <ArrowRight className="w-4 h-4" />
               </button>
-              <div className="pt-2 flex items-center justify-between text-xs text-[var(--text-muted)]">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEmail('admin@vantage.local');
-                    setPassword('change-me-now');
-                  }}
-                  className="text-[var(--accent-brand)] hover:underline"
-                >
-                  Fill Admin Account
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEmail('alex.vance@vantagecapital.demo');
-                    setPassword('VantagePro2026!');
-                  }}
-                  className="text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:underline"
-                >
-                  Fill Demo Trader
-                </button>
-              </div>
             </form>
           ) : (
             <form onSubmit={handleSignUp} className="mt-6 space-y-4" noValidate>
@@ -318,13 +295,13 @@ export const AuthPage: React.FC = () => {
             </div>
             {forgotSent ? (
               <p className="mt-4 text-sm text-[var(--text-secondary)]">
-                If an account exists for {forgotEmail}, a reset link is on its way.
+                Automatic password reset is not enabled yet. Please contact your Vantage administrator to reset the password for {forgotEmail}.
               </p>
             ) : (
               <form onSubmit={handleForgot} className="mt-4 space-y-4">
-                <p className="text-sm text-[var(--text-muted)]">Enter your email and we will send you a link to choose a new password.</p>
+                <p className="text-sm text-[var(--text-muted)]">Enter your email to see how to reset your password.</p>
                 <input type="email" required placeholder="you@example.com" value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} className={inputCls} aria-label="Email" />
-                <button type="submit" className={primaryBtn}>Send reset link</button>
+                <button type="submit" className={primaryBtn}>Continue</button>
               </form>
             )}
           </div>

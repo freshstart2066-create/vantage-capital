@@ -45,7 +45,7 @@ const MainLayout: React.FC = () => {
       <Header />
 
       {/* Main Content Workspace */}
-      <main className="flex-1 max-w-[1720px] w-full mx-auto px-3 sm:px-4 py-4">
+      <main className={`flex-1 max-w-[1720px] w-full mx-auto px-3 sm:px-4 py-4 ${user ? 'pb-24 lg:pb-4' : ''}`}>
         {activeTab === 'auth' && <AuthPage />}
         {activeTab === 'home' && <CompanyHome />}
         {activeTab === 'terminal' && <TradingTerminal />}
@@ -61,7 +61,7 @@ const MainLayout: React.FC = () => {
 
       {/* Floating Neomorphic Notification Toast */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 animate-slideUp">
+        <div className="fixed bottom-24 lg:bottom-6 right-3 sm:right-6 left-3 sm:left-auto z-50 animate-slideUp">
           <div
             className={`neo-card p-3.5 pr-8 rounded-xl shadow-2xl flex items-center gap-3 border ${
               toastMessage.type === 'success'

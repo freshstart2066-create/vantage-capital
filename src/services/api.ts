@@ -41,6 +41,7 @@ export interface Report {
 
 export interface Tx {
   id: number;
+  user_id?: number;
   kind: string;
   amount: number;
   status: string;
@@ -274,6 +275,17 @@ export const api = {
     }
   },
 
+  changePassword: async (currentPassword: string, newPassword: string) => {
+    try {
+      return await call<{ ok: true }>('/change-password', { currentPassword, newPassword });
+    } catch (err: unknown) {
+      if ((err as Error).message === 'API_OFFLINE') {
+        return { ok: true as const };
+      }
+      throw err;
+    }
+  },
+
   depositInfo: async (): Promise<DepositInfo> => {
     try {
       return await call<DepositInfo>('/deposit-info');
@@ -401,6 +413,7 @@ export const api = {
           const txs = getLocalTx();
           txs.unshift({
             id: Date.now(),
+            user_id: userId,
             kind: 'credit',
             amount,
             status: 'completed',
@@ -412,9 +425,63 @@ export const api = {
           });
           saveLocalTx(txs);
         }
-        return { ok: true };
+        return { ok: true as const };
       }
       throw err;
+    }
+  },
+
+  adminDebit: async (userId: number, amount: number, note: string) => {
+    try {
+      return await call<{ ok: true }>('/admin/debit', { userId, amount, note });
+    } catch (err: unknown) {
+      if ((err as Error).message === 'API_OFFLINE') {
+        const users = getLocalUsers();
+        const target = users.find(u => u.id === userId);
+        if (target) {
+          if (target.balance < amount) throw new Error(`Balance is only $${target.balance.toFixed(2)}. Cannot debit below zero.`);
+          target.balance -= amount;
+          saveLocalUsers(users);
+          const txs = getLocalTx();
+          txs.unshift({
+            id: Date.now(),
+            user_id: userId,
+            kind: 'adjustment',
+            amount,
+            status: 'completed',
+            note: note || 'Administrative Debit',
+            ref: 'DBT-' + Math.floor(1000 + Math.random() * 9000),
+            created_at: Date.now(),
+            name: target.name,
+            account_no: target.account_no,
+          });
+          saveLocalTx(txs);
+        }
+        return { ok: true as const };
+      }
+      throw err;
+    }
+  },
+
+  adminResetPassword: async (userId: number) => {
+    try {
+      return await call<{ ok: true; temporaryPassword: string }>('/admin/reset-password', { userId });
+    } catch (err: unknown) {
+      if ((err as Error).message === 'API_OFFLINE') {
+        return { ok: true as const, temporaryPassword: 'temp_' + Math.random().toString(36).slice(2, 10) };
+      }
+      throw err;
+    }
+  },
+
+  adminUserTx: async (id: number) => {
+    try {
+      return await call<{ user: AdminUser & { country: string }; tx: Tx[] }>('/admin/user-tx', { id });
+    } catch {
+      const users = getLocalUsers();
+      const u = users.find(x => x.id === id) || { id, name: 'Client', email: 'client@vantage.local', account_no: 'VC' + id, currency: 'USD', balance: 0, created_at: Date.now() };
+      const txs = getLocalTx().filter(t => t.user_id === id || t.name === u.name);
+      return { user: { ...u, country: 'United States' }, tx: txs };
     }
   },
 

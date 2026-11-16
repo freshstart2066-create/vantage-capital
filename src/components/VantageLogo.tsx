@@ -62,14 +62,14 @@ export const VantageLogo: React.FC<VantageLogoProps> = ({ size = 28, className =
       {showText && (
         <div className="flex flex-col select-none">
           <div className="flex items-center gap-1.5">
-            <span className="text-lg font-black tracking-wider text-[var(--text-primary)]">
+            <span className="text-base sm:text-lg font-black tracking-wider text-[var(--text-primary)]">
               VANTAGE
             </span>
-            <span className="text-xs font-bold px-1.5 py-0.5 rounded neo-inset-sm text-[var(--accent-brand)] tracking-widest">
+            <span className="hidden min-[430px]:inline text-xs font-bold px-1.5 py-0.5 rounded neo-inset-sm text-[var(--accent-brand)] tracking-widest">
               CAPITAL
             </span>
           </div>
-          <span className="text-[9px] font-mono tracking-widest uppercase text-[var(--text-muted)]">
+          <span className="hidden sm:block text-[9px] font-mono tracking-widest uppercase text-[var(--text-muted)]">
             Institutional Strategy Sandbox
           </span>
         </div>
