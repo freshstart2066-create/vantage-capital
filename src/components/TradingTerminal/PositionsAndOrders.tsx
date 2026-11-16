@@ -418,14 +418,14 @@ export const PositionsAndOrders: React.FC = () => {
                       className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-bold uppercase ${
                         req.status === 'SETTLED'
                           ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
-                          : req.status === 'DISPATCHED_FEDWIRE'
+                          : req.status === 'DISPATCHED_TRANSFER'
                           ? 'bg-sky-500/10 text-sky-400 border border-sky-500/30'
                           : 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
                       }`}
                     >
                       {req.status === 'SETTLED'
                         ? 'Settled'
-                        : req.status === 'DISPATCHED_FEDWIRE'
+                        : req.status === 'DISPATCHED_TRANSFER'
                         ? 'Dispatched'
                         : 'Processing'}
                     </span>

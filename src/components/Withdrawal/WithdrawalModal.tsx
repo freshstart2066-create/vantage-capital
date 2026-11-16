@@ -152,7 +152,7 @@ export const WithdrawalModal: React.FC<WithdrawalModalProps> = ({ isOpen, onClos
                   USA Domestic Wire Transfer Withdrawal
                 </h2>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-bold">
-                  Fedwire Direct
+                  Bank transfer Direct
                 </span>
               </div>
               <p className="text-xs text-[var(--text-muted)] mt-0.5">
@@ -240,7 +240,7 @@ export const WithdrawalModal: React.FC<WithdrawalModalProps> = ({ isOpen, onClos
 
             <div>
               <h3 className="text-base font-bold text-[var(--text-primary)]">
-                Fedwire Withdrawal Dispatched
+                Bank transfer Withdrawal Dispatched
               </h3>
               <p className="text-xs text-[var(--text-muted)] mt-1">
                 Your wire payout instruction has been authenticated and queued for domestic clearing.
@@ -558,7 +558,7 @@ export const WithdrawalModal: React.FC<WithdrawalModalProps> = ({ isOpen, onClos
                     <MapPin className="w-3.5 h-3.5 text-[var(--text-muted)]" />
                     Beneficiary Physical Address (USA)
                   </span>
-                  <span className="text-[10px] text-[var(--text-muted)]">FinCEN Fedwire Requirement</span>
+                  <span className="text-[10px] text-[var(--text-muted)]">FinCEN Bank transfer Requirement</span>
                 </label>
                 <input
                   type="text"
@@ -599,7 +599,7 @@ export const WithdrawalModal: React.FC<WithdrawalModalProps> = ({ isOpen, onClos
               <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
               <div>
                 <strong className="text-[var(--text-primary)]">Federal Reserve Settlement:</strong>{' '}
-                Domestic USA Fedwire transfers execute in real time. Transfer instructions received prior
+                Domestic USA Bank transfer transfers execute in real time. Transfer instructions received prior
                 to 16:00 EST are cleared same-day. Zero wire transaction fees are assessed on ECN
                 accounts.
               </div>
@@ -628,7 +628,7 @@ export const WithdrawalModal: React.FC<WithdrawalModalProps> = ({ isOpen, onClos
         {activeTab === 'history' && (
           <div className="space-y-3">
             <div className="flex items-center justify-between text-xs text-[var(--text-muted)]">
-              <span>Recorded Fedwire Disbursements</span>
+              <span>Recorded Bank transfer Disbursements</span>
               <span>All Domestic Transactions</span>
             </div>
 
@@ -652,14 +652,14 @@ export const WithdrawalModal: React.FC<WithdrawalModalProps> = ({ isOpen, onClos
                           className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-bold uppercase ${
                             req.status === 'SETTLED'
                               ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
-                              : req.status === 'DISPATCHED_FEDWIRE'
+                              : req.status === 'DISPATCHED_TRANSFER'
                               ? 'bg-sky-500/10 text-sky-400 border border-sky-500/30'
                               : 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
                           }`}
                         >
                           {req.status === 'SETTLED'
-                            ? 'Fedwire Settled'
-                            : req.status === 'DISPATCHED_FEDWIRE'
+                            ? 'Bank transfer Settled'
+                            : req.status === 'DISPATCHED_TRANSFER'
                             ? 'Dispatched to Fed'
                             : 'Pending Clearing'}
                         </span>

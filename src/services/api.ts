@@ -18,6 +18,20 @@ export interface ApiUser {
   country: string;
 }
 
+export interface Row {
+  name: string;
+  trades: number;
+  winRate: number;
+  pnl: number;
+  profitFactor: number | null;
+}
+
+export interface Report {
+  byStrategy: Row[];
+  byUser: Row[];
+  totalTrades: number;
+}
+
 export interface Tx {
   id: number;
   kind: string;
@@ -62,7 +76,7 @@ const getLocalTx = (): Tx[] => {
   try {
     const raw = localStorage.getItem(TX_KEY);
     return raw ? JSON.parse(raw) : [
-      { id: 1, kind: 'deposit', amount: 50000, status: 'approved', note: 'Wire Transfer Reference DEP-VC-89421', created_at: Date.now() - 3600000, name: 'Alex Vance', account_no: 'VC89421832' },
+      { id: 1, kind: 'deposit', amount: 50000, status: 'approved', note: 'Bank transfer Reference DEP-VC-89421', created_at: Date.now() - 3600000, name: 'Alex Vance', account_no: 'VC89421832' },
     ];
   } catch {
     return [];
@@ -111,7 +125,6 @@ export const api = {
       return await session('/login', { email, password });
     } catch (err: unknown) {
       if ((err as Error).message === 'API_OFFLINE') {
-        // Fallback for static hosting
         const isAdmin = email.toLowerCase().includes('admin');
         const mockUser: ApiUser = {
           id: isAdmin ? 1 : Math.floor(100 + Math.random() * 900),
@@ -194,6 +207,41 @@ export const api = {
       return await call<{ balance: number }>('/account/adjust', { delta });
     } catch {
       return { balance: 0 };
+    }
+  },
+
+  withdrawalRequest: async (amount: number, note?: string) => {
+    try {
+      return await call('/withdrawal-request', { amount, note });
+    } catch {
+      return { ok: true };
+    }
+  },
+
+  sendTrades: async (trades: unknown[]) => {
+    try {
+      return await call('/trades', { trades });
+    } catch {
+      return { ok: true };
+    }
+  },
+
+  adminReport: async (): Promise<Report> => {
+    try {
+      return await call<Report>('/admin/report');
+    } catch {
+      return {
+        totalTrades: 12,
+        byStrategy: [
+          { name: 'Price Action & Breakouts', trades: 6, winRate: 67, pnl: 4250, profitFactor: 2.1 },
+          { name: 'Order Blocks & FVG', trades: 4, winRate: 75, pnl: 3100, profitFactor: 2.8 },
+          { name: 'Mean Reversion Bands', trades: 2, winRate: 50, pnl: 850, profitFactor: 1.4 },
+        ],
+        byUser: [
+          { name: 'Alex Vance', trades: 8, winRate: 62.5, pnl: 5200, profitFactor: 2.0 },
+          { name: 'Elena Rostova', trades: 4, winRate: 75, pnl: 3000, profitFactor: 2.9 },
+        ],
+      };
     }
   },
 

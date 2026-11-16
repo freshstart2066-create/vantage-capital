@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTrading } from '../../context/TradingContext';
-import { api, type AdminUser, type Tx } from '../../services/api';
+import { api, type AdminUser, type Tx, type Report, type Row } from '../../services/api';
 
 const money = (n: number) => n.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
 const field = 'rounded-lg border border-slate-400/40 bg-transparent px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent-brand)]';
@@ -13,9 +13,10 @@ export const AdminDashboard: React.FC = () => {
   const [amount, setAmount] = useState('');
   const [note, setNote] = useState('');
   const [msg, setMsg] = useState('');
+  const [report, setReport] = useState<Report | null>(null);
 
   const load = useCallback(async () => {
-    try { setUsers(await api.adminUsers()); setTx(await api.adminTx()); } catch (e) { setMsg((e as Error).message); }
+    try { setUsers(await api.adminUsers()); setTx(await api.adminTx()); setReport(await api.adminReport()); } catch (e) { setMsg((e as Error).message); }
   }, []);
   useEffect(() => { if (user?.role === 'admin') void load(); }, [user, load]);
 
@@ -61,6 +62,19 @@ export const AdminDashboard: React.FC = () => {
           </div>
         ))}
       </section>
+
+      {report && (
+        <section className="overflow-x-auto">
+          <h2 className="text-base font-semibold mb-3 text-[var(--text-primary)]">Strategy results ({report.totalTrades} closed trades)</h2>
+          {([['Strategy', report.byStrategy], ['Trader', report.byUser]] as [string, Row[]][]).map(([label, rows]) => (
+            <table key={label} className="w-full text-sm text-left text-[var(--text-secondary)] mb-6">
+              <thead className="text-[var(--text-muted)]"><tr><th className="py-2">{label}</th><th>Trades</th><th>Win rate</th><th>Profit factor</th><th className="text-right">Net P&amp;L</th></tr></thead>
+              <tbody>{rows.length === 0 ? <tr><td className="py-2 text-[var(--text-muted)]" colSpan={5}>No closed trades yet.</td></tr> : rows.map(r => (
+                <tr key={r.name} className="border-t border-slate-400/20"><td className="py-2">{r.name}</td><td>{r.trades}</td><td>{r.winRate}%</td><td>{r.profitFactor ?? '-'}</td><td className={'text-right ' + (r.pnl >= 0 ? 'text-emerald-500' : 'text-rose-500')}>{money(r.pnl)}</td></tr>))}</tbody>
+            </table>
+          ))}
+        </section>
+      )}
 
       <section className="overflow-x-auto">
         <h2 className="text-base font-semibold mb-3 text-[var(--text-primary)]">Users ({users.length})</h2>

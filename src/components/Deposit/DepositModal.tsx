@@ -114,7 +114,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
   const wireInstructions = [
     { label: 'Beneficiary Name', value: 'Vantage Capital Asset Management LLC', id: 'bene' },
     { label: 'Receiving Bank', value: 'JPMorgan Chase Bank, N.A.', id: 'bank' },
-    { label: 'Fedwire Routing (ABA)', value: '021000021', id: 'aba' },
+    { label: 'Bank transfer Routing (ABA)', value: '021000021', id: 'aba' },
     { label: 'Account Number', value: '7724-0019-3841', id: 'acct' },
     { label: 'Account Classification', value: 'Commercial Trust Checking', id: 'type' },
     { label: 'Bank Address', value: '383 Madison Ave, New York, NY 10017', id: 'addr' },
@@ -133,10 +133,10 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-base font-bold text-[var(--text-primary)]">
-                  USA Domestic Fedwire Deposit
+                  Bank transfer Deposit
                 </h2>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-400 font-bold border border-sky-500/30">
-                  Fedwire Inbound
+                  Bank transfer Inbound
                 </span>
               </div>
               <p className="text-xs text-[var(--text-muted)]">
@@ -187,13 +187,13 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
         <div className="p-5 overflow-y-auto space-y-5 flex-1">
           {activeTab === 'wire_info' ? (
             <div className="space-y-5">
-              {/* Official Vantage Capital Fedwire Wiring Instructions Card */}
+              {/* Official Vantage Capital Bank transfer Wiring Instructions Card */}
               <div className="p-4 rounded-2xl neo-inset space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <ShieldCheck className="w-4 h-4 text-emerald-400" />
                     <span className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)]">
-                      Official Fedwire Wiring Instructions
+                      Official Bank transfer Wiring Instructions
                     </span>
                   </div>
                   <span className="text-[10px] font-mono text-[var(--text-muted)]">
@@ -201,7 +201,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
                   </span>
                 </div>
                 <p className="text-[11px] text-[var(--text-muted)]">
-                  Provide these details to your commercial bank teller or enter them directly into your bank&apos;s online Fedwire dispatch portal:
+                  Provide these details to your commercial bank teller or enter them directly into your bank&apos;s online Bank transfer dispatch portal:
                 </p>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 text-xs font-mono">
@@ -367,7 +367,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
                   />
                 </div>
 
-                {/* IMAD / OMAD Fedwire Trace Number (Optional) */}
+                {/* IMAD / OMAD Bank transfer Trace Number (Optional) */}
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
                     <label htmlFor="dep-imad" className="text-xs font-semibold text-[var(--text-secondary)] flex items-center gap-1.5">
@@ -413,7 +413,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
                   >
                     <ArrowDownToLine className="w-4 h-4" />
                     <span>
-                      Register Domestic Fedwire Deposit (${parseFloat(amount || '0').toLocaleString('en-US', { minimumFractionDigits: 2 })})
+                      Register Domestic Bank transfer Deposit (${parseFloat(amount || '0').toLocaleString('en-US', { minimumFractionDigits: 2 })})
                     </span>
                   </button>
                 </div>
@@ -437,14 +437,14 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
                     <div>Ref: <strong className="text-[var(--text-primary)]">{recentReceipt.referenceId}</strong></div>
                     <div>Amount: <strong className="text-emerald-400">${recentReceipt.amount.toLocaleString()} USD</strong></div>
                     <div>Sending Bank: <strong className="text-[var(--text-primary)]">{recentReceipt.bankName}</strong></div>
-                    <div>Clearing: <strong className="text-[var(--text-primary)]">Federal Reserve Fedwire Direct</strong></div>
+                    <div>Clearing: <strong className="text-[var(--text-primary)]">Federal Reserve Bank transfer Direct</strong></div>
                   </div>
                 </div>
               )}
 
               <div className="flex items-center justify-between pb-2 border-b border-[var(--border-subtle)]">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)]">
-                  Fedwire Inbound Ledger
+                  Bank transfer Inbound Ledger
                 </h3>
                 <span className="text-[11px] text-[var(--text-muted)] font-mono">
                   {depositRequests.length} recorded
@@ -474,7 +474,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
                                 : 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
                             }`}
                           >
-                            {dep.status === 'SETTLED' ? 'SETTLED' : 'CLEARING FEDWIRE'}
+                            {dep.status === 'SETTLED' ? 'SETTLED' : 'CLEARING TRANSFER'}
                           </span>
                         </div>
                         <div className="text-[11px] text-[var(--text-muted)] flex items-center gap-3">

@@ -351,7 +351,7 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return [
       {
         id: 'wd_initial_1',
-        referenceId: 'FEDWIRE-784102',
+        referenceId: 'TRANSFER-784102',
         amount: 2500,
         fee: 0,
         netAmount: 2500,
@@ -364,7 +364,7 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
         wireMemo: 'Capital Performance Payout',
         timestamp: Date.now() - 3 * 24 * 3600 * 1000,
         status: 'SETTLED',
-        estimatedArrival: 'Settled via Fedwire',
+        estimatedArrival: 'Settled via Bank transfer',
       },
     ];
   });
@@ -1244,7 +1244,7 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       return { success: false, error: err };
     }
 
-    const refNum = `FEDWIRE-${Math.floor(100000 + Math.random() * 900000)}`;
+    const refNum = `TRANSFER-${Math.floor(100000 + Math.random() * 900000)}`;
     const last4 = cleanAccount.slice(-4);
     const masked = `•••• ${last4}`;
 
@@ -1263,7 +1263,7 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       wireMemo: wireMemo?.trim() || 'Capital Payout',
       timestamp: Date.now(),
       status: 'PROCESSING',
-      estimatedArrival: 'Same-day Fedwire (Cutoff 16:00 EST)',
+      estimatedArrival: 'Same-day Bank transfer (Cutoff 16:00 EST)',
     };
 
     // Deduct immediately from balance and free margin
@@ -1283,15 +1283,15 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     if (soundEnabled) playTradingSound('win');
     setToastMessage({
-      text: `Wire withdrawal submitted: $${amount.toLocaleString()} via Fedwire (${refNum})`,
+      text: `Wire withdrawal submitted: $${amount.toLocaleString()} via Bank transfer (${refNum})`,
       type: 'success',
     });
 
-    // Simulate Fedwire network dispatch confirmation
+    // Simulate Bank transfer network dispatch confirmation
     setTimeout(() => {
       setWithdrawalRequests(prev =>
         prev.map(r =>
-          r.referenceId === refNum ? { ...r, status: 'DISPATCHED_FEDWIRE' } : r
+          r.referenceId === refNum ? { ...r, status: 'DISPATCHED_TRANSFER' } : r
         )
       );
     }, 6000);

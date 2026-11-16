@@ -14,7 +14,7 @@ export const CompanyAbout: React.FC = () => {
           Client Fund Management with Real Capital. Governed by Rigorous Forward-Testing.
         </h1>
         <p className="text-xs sm:text-sm text-[var(--text-muted)] max-w-2xl mx-auto mt-3">
-          Vantage Capital is an institutional asset management firm that manages client funds and executes real-money market operations with domestic Fedwire settlement. To protect client capital, all quantitative models and discretionary strategies must first be test-run and verified in our paper-trading simulation engine before receiving live allocation.
+          Vantage Capital is an institutional asset management firm that manages client funds and executes real-money market operations with domestic Bank transfer settlement. To protect client capital, all quantitative models and discretionary strategies must first be test-run and verified in our paper-trading simulation engine before receiving live allocation.
         </p>
       </div>
 
@@ -28,7 +28,7 @@ export const CompanyAbout: React.FC = () => {
             Real Money Client Management
           </h3>
           <p className="text-xs text-[var(--text-muted)]">
-            We are not a prop firm. We manage real client funds under strict fiduciary mandates, executing direct market orders with tier-1 liquidity and domestic Fedwire banking settlement.
+            We are not a prop firm. We manage real client funds under strict fiduciary mandates, executing direct market orders with tier-1 liquidity and domestic Bank transfer banking settlement.
           </p>
         </div>
 
@@ -76,7 +76,7 @@ export const CompanyAbout: React.FC = () => {
 
           <div className="neo-inset p-3 rounded-xl">
             <div className="text-xs font-bold text-[var(--text-primary)]">New York NY4 (Secaucus)</div>
-            <div className="text-[11px] text-[var(--text-muted)] mt-0.5">US Equities (AAPL, NVDA, SPY) & Fedwire Direct</div>
+            <div className="text-[11px] text-[var(--text-muted)] mt-0.5">US Equities (AAPL, NVDA, SPY) & Bank transfer Direct</div>
             <div className="text-xs font-mono font-semibold text-[var(--accent-long)] mt-1">~1.2ms Direct Ping</div>
           </div>
 
@@ -127,7 +127,7 @@ export const CompanyAbout: React.FC = () => {
             <div>
               <div className="text-xs font-bold text-[var(--text-primary)]">Phase 3: Live Client Capital Allocation</div>
               <div className="text-xs text-[var(--text-muted)]">
-                Upon meeting deployment criteria, strategies receive live capital allocation across client mandates with real-money Fedwire settlement.
+                Upon meeting deployment criteria, strategies receive live capital allocation across client mandates with real-money Bank transfer settlement.
               </div>
             </div>
           </div>

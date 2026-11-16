@@ -90,7 +90,7 @@ export const AccountOverviewBar: React.FC = () => {
             <button
               onClick={() => setIsWithdrawOpen(true)}
               className="neo-btn py-1.5 px-2.5 text-xs font-bold text-emerald-400 border border-emerald-500/30 hover:border-emerald-500/60 flex items-center gap-1"
-              title="Request USA Domestic Fedwire Withdrawal"
+              title="Request Bank transfer Withdrawal"
             >
               <Landmark className="w-3.5 h-3.5 text-emerald-400" />
               <span className="hidden xl:inline">Withdraw</span>

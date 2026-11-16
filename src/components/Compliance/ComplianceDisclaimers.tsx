@@ -25,10 +25,10 @@ export const ComplianceDisclaimers: React.FC = () => {
           1. Asset Management & Pre-Deployment Strategy Testing Scope
         </h2>
         <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
-          Vantage Capital is an institutional asset management firm that manages client funds and executes real-money market operations with domestic Fedwire settlement. We are not a prop firm.
+          Vantage Capital is an institutional asset management firm that manages client funds and executes real-money market operations with domestic Bank transfer settlement. We are not a prop firm.
         </p>
         <div className="p-3 rounded-xl neo-inset text-xs text-[var(--text-muted)] leading-relaxed">
-          <strong>Fiduciary Mandate:</strong> To protect client capital, all quantitative models and discretionary strategies must first undergo mandatory forward-testing in our internal paper simulation cockpit before any live client capital is allocated. Real-money client deposits and disbursements are processed exclusively via USA Domestic Fedwire clearing.
+          <strong>Fiduciary Mandate:</strong> To protect client capital, all quantitative models and discretionary strategies must first undergo mandatory forward-testing in our internal paper simulation cockpit before any live client capital is allocated. Real-money client deposits and disbursements are processed exclusively via Bank transfer clearing.
         </div>
       </div>
 

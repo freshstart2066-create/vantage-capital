@@ -203,19 +203,19 @@ export interface UserProfile {
 
 export interface WithdrawalRequest {
   id: string;
-  referenceId: string; // e.g. FEDWIRE-849201
+  referenceId: string; // e.g. TRANSFER-849201
   amount: number;
   fee: number;
   netAmount: number;
   beneficiaryName: string;
   bankName: string;
-  routingNumber: string; // 9-digit ABA Fedwire
+  routingNumber: string; // 9-digit ABA Bank transfer
   accountNumberMasked: string; // e.g. •••• 4892
   accountType: 'CHECKING' | 'SAVINGS';
   beneficiaryAddress: string;
   wireMemo?: string;
   timestamp: number;
-  status: 'PROCESSING' | 'DISPATCHED_FEDWIRE' | 'SETTLED';
+  status: 'PROCESSING' | 'DISPATCHED_TRANSFER' | 'SETTLED';
   estimatedArrival: string;
 }
 

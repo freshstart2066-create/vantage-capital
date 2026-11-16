@@ -340,7 +340,7 @@ export const ProfilePage: React.FC = () => {
                 USD ($) United States Dollar
               </div>
               <span className="text-[10px] text-emerald-400">
-                Fedwire Direct Clearing
+                Bank transfer
               </span>
             </div>
           </div>
@@ -395,7 +395,7 @@ export const ProfilePage: React.FC = () => {
                   Saved USA Domestic Wire Profile
                 </h2>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-bold">
-                  Fedwire Default
+                  Default method
                 </span>
               </div>
               <p className="text-xs text-[var(--text-muted)]">
