@@ -14,7 +14,7 @@ export const CompanyAbout: React.FC = () => {
           Client Fund Management with Real Capital. Governed by Rigorous Forward-Testing.
         </h1>
         <p className="text-xs sm:text-sm text-[var(--text-muted)] max-w-2xl mx-auto mt-3">
-          Vantage Capital is an institutional asset management firm that manages client funds and executes real-money market operations with domestic Bank transfer settlement. To protect client capital, all quantitative models and discretionary strategies must first be test-run and verified in our paper-trading simulation engine before receiving live allocation.
+          Vantage Capital is an institutional asset management firm that manages client funds and executes market operations with domestic bank transfer settlement. To protect capital, all quantitative models and investment strategies are rigorously verified in our simulation environment to ensure adherence to strict risk mandates.
         </p>
       </div>
 
@@ -25,10 +25,10 @@ export const CompanyAbout: React.FC = () => {
             <Landmark className="w-5 h-5" />
           </div>
           <h3 className="text-base font-bold text-[var(--text-primary)] mb-1">
-            Real Money Client Management
+            Fiduciary Capital Management
           </h3>
           <p className="text-xs text-[var(--text-muted)]">
-            We are not a prop firm. We manage real client funds under strict fiduciary mandates, executing direct market orders with tier-1 liquidity and domestic Bank transfer banking settlement.
+            We manage client funds under strict institutional mandates, executing direct market orders with Tier-1 liquidity and domestic wire bank settlement.
           </p>
         </div>
 
@@ -37,10 +37,10 @@ export const CompanyAbout: React.FC = () => {
             <Cpu className="w-5 h-5" />
           </div>
           <h3 className="text-base font-bold text-[var(--text-primary)] mb-1">
-            Pre-Deployment Strategy Lab
+            Quantitative Research & Analytics
           </h3>
           <p className="text-xs text-[var(--text-muted)]">
-            Before a strategy is authorized for live client funds, it undergoes forward-testing in our simulation sandbox to verify statistical expectancy, Win Rate %, and drawdown boundaries under live interbank spreads.
+            Prior to live capital allocation, strategies undergo rigorous quantitative verification to evaluate statistical expectancy, win rate metrics, and drawdown boundaries under live interbank conditions.
           </p>
         </div>
 

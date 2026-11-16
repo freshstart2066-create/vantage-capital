@@ -6,86 +6,86 @@
   --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
-  /* Default Light theme neomorphic variables */
-  --bg-primary: #e6ebf4;
-  --bg-surface: #e6ebf4;
-  --bg-surface-card: #eaf0f8;
-  --bg-sunken: #dce3ed;
+  /* Default Light theme - Clean Institutional Fintech */
+  --bg-primary: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-surface-card: #ffffff;
+  --bg-sunken: #f1f5f9;
   
-  --shadow-extruded: 8px 8px 18px #c2c9d6, -8px -8px 18px #ffffff;
-  --shadow-extruded-sm: 4px 4px 9px #c2c9d6, -4px -4px 9px #ffffff;
-  --shadow-extruded-lg: 12px 12px 26px #bdc5d2, -12px -12px 26px #ffffff;
-  --shadow-inset: inset 3px 3px 6px #c0c7d4, inset -3px -3px 6px #ffffff;
-  --shadow-inset-sm: inset 2px 2px 4px #c0c7d4, inset -2px -2px 4px #ffffff;
+  --shadow-extruded: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --shadow-extruded-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-extruded-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+  --shadow-inset: none;
+  --shadow-inset-sm: none;
   
-  --text-primary: #111827;
-  --text-secondary: #374151;
-  --text-muted: #6b7280;
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
   
-  --border-subtle: rgba(255, 255, 255, 0.7);
-  --border-darker: rgba(194, 201, 214, 0.4);
+  --border-subtle: #e2e8f0;
+  --border-darker: #cbd5e1;
 
   --accent-long: #059669;
-  --accent-long-bg: rgba(5, 150, 105, 0.12);
-  --accent-short: #e11d48;
-  --accent-short-bg: rgba(225, 29, 72, 0.12);
-  --accent-brand: #2563eb;
-  --accent-brand-glow: rgba(37, 99, 235, 0.25);
+  --accent-long-bg: rgba(5, 150, 105, 0.1);
+  --accent-short: #dc2626;
+  --accent-short-bg: rgba(220, 38, 38, 0.1);
+  --accent-brand: #0284c7;
+  --accent-brand-glow: rgba(2, 132, 199, 0.15);
 
   &:has(> head > meta[name="color-scheme"][content="dark"]) {
     color-scheme: dark;
-    --bg-primary: #0f131a;
-    --bg-surface: #141a24;
-    --bg-surface-card: #181f2b;
-    --bg-sunken: #0c0f15;
+    --bg-primary: #090d16;
+    --bg-surface: #0f172a;
+    --bg-surface-card: #131c31;
+    --bg-sunken: #060911;
     
-    --shadow-extruded: 7px 7px 18px rgba(0, 0, 0, 0.55), -5px -5px 14px rgba(255, 255, 255, 0.035);
-    --shadow-extruded-sm: 4px 4px 10px rgba(0, 0, 0, 0.45), -3px -3px 8px rgba(255, 255, 255, 0.025);
-    --shadow-extruded-lg: 12px 12px 30px rgba(0, 0, 0, 0.65), -8px -8px 20px rgba(255, 255, 255, 0.045);
-    --shadow-inset: inset 3px 3px 7px rgba(0, 0, 0, 0.6), inset -2px -2px 5px rgba(255, 255, 255, 0.03);
-    --shadow-inset-sm: inset 2px 2px 4px rgba(0, 0, 0, 0.5), inset -1px -1px 3px rgba(255, 255, 255, 0.02);
+    --shadow-extruded: 0 1px 3px rgba(0, 0, 0, 0.35);
+    --shadow-extruded-sm: 0 1px 2px rgba(0, 0, 0, 0.25);
+    --shadow-extruded-lg: 0 12px 32px rgba(0, 0, 0, 0.5);
+    --shadow-inset: none;
+    --shadow-inset-sm: none;
     
-    --text-primary: #f9fafb;
-    --text-secondary: #d1d5db;
-    --text-muted: #9ca3af;
+    --text-primary: #f8fafc;
+    --text-secondary: #cbd5e1;
+    --text-muted: #94a3b8;
     
-    --border-subtle: rgba(255, 255, 255, 0.04);
-    --border-darker: rgba(0, 0, 0, 0.3);
+    --border-subtle: rgba(255, 255, 255, 0.09);
+    --border-darker: rgba(255, 255, 255, 0.15);
 
     --accent-long: #10b981;
     --accent-long-bg: rgba(16, 185, 129, 0.14);
-    --accent-short: #f43f5e;
-    --accent-short-bg: rgba(244, 63, 94, 0.14);
-    --accent-brand: #3b82f6;
-    --accent-brand-glow: rgba(59, 130, 246, 0.3);
+    --accent-short: #ef4444;
+    --accent-short-bg: rgba(239, 68, 68, 0.14);
+    --accent-brand: #38bdf8;
+    --accent-brand-glow: rgba(56, 189, 248, 0.2);
   }
 
   &:has(> head > meta[name="color-scheme"][content="light"]) {
     color-scheme: light;
-    --bg-primary: #e6ebf4;
-    --bg-surface: #e6ebf4;
-    --bg-surface-card: #eaf0f8;
-    --bg-sunken: #dce3ed;
+    --bg-primary: #f8fafc;
+    --bg-surface: #ffffff;
+    --bg-surface-card: #ffffff;
+    --bg-sunken: #f1f5f9;
     
-    --shadow-extruded: 8px 8px 18px #c2c9d6, -8px -8px 18px #ffffff;
-    --shadow-extruded-sm: 4px 4px 9px #c2c9d6, -4px -4px 9px #ffffff;
-    --shadow-extruded-lg: 12px 12px 26px #bdc5d2, -12px -12px 26px #ffffff;
-    --shadow-inset: inset 3px 3px 6px #c0c7d4, inset -3px -3px 6px #ffffff;
-    --shadow-inset-sm: inset 2px 2px 4px #c0c7d4, inset -2px -2px 4px #ffffff;
+    --shadow-extruded: 0 1px 3px rgba(0, 0, 0, 0.05);
+    --shadow-extruded-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+    --shadow-extruded-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+    --shadow-inset: none;
+    --shadow-inset-sm: none;
     
-    --text-primary: #111827;
-    --text-secondary: #374151;
-    --text-muted: #6b7280;
+    --text-primary: #0f172a;
+    --text-secondary: #334155;
+    --text-muted: #64748b;
     
-    --border-subtle: rgba(255, 255, 255, 0.7);
-    --border-darker: rgba(194, 201, 214, 0.4);
+    --border-subtle: #e2e8f0;
+    --border-darker: #cbd5e1;
 
     --accent-long: #059669;
-    --accent-long-bg: rgba(5, 150, 105, 0.12);
-    --accent-short: #e11d48;
-    --accent-short-bg: rgba(225, 29, 72, 0.12);
-    --accent-brand: #2563eb;
-    --accent-brand-glow: rgba(37, 99, 235, 0.25);
+    --accent-long-bg: rgba(5, 150, 105, 0.1);
+    --accent-short: #dc2626;
+    --accent-short-bg: rgba(220, 38, 38, 0.1);
+    --accent-brand: #0284c7;
+    --accent-brand-glow: rgba(2, 132, 199, 0.15);
   }
 }
 
@@ -93,35 +93,33 @@
 @media (prefers-color-scheme: dark) {
   :root:not(:has(> head > meta[name="color-scheme"][content="light"])) {
     color-scheme: dark;
-    --bg-primary: #0f131a;
-    --bg-surface: #141a24;
-    --bg-surface-card: #181f2b;
-    --bg-sunken: #0c0f15;
+    --bg-primary: #090d16;
+    --bg-surface: #0f172a;
+    --bg-surface-card: #131c31;
+    --bg-sunken: #060911;
     
-    --shadow-extruded: 7px 7px 18px rgba(0, 0, 0, 0.55), -5px -5px 14px rgba(255, 255, 255, 0.035);
-    --shadow-extruded-sm: 4px 4px 10px rgba(0, 0, 0, 0.45), -3px -3px 8px rgba(255, 255, 255, 0.025);
-    --shadow-extruded-lg: 12px 12px 30px rgba(0, 0, 0, 0.65), -8px -8px 20px rgba(255, 255, 255, 0.045);
-    --shadow-inset: inset 3px 3px 7px rgba(0, 0, 0, 0.6), inset -2px -2px 5px rgba(255, 255, 255, 0.03);
-    --shadow-inset-sm: inset 2px 2px 4px rgba(0, 0, 0, 0.5), inset -1px -1px 3px rgba(255, 255, 255, 0.02);
+    --shadow-extruded: 0 1px 3px rgba(0, 0, 0, 0.35);
+    --shadow-extruded-sm: 0 1px 2px rgba(0, 0, 0, 0.25);
+    --shadow-extruded-lg: 0 12px 32px rgba(0, 0, 0, 0.5);
+    --shadow-inset: none;
+    --shadow-inset-sm: none;
     
-    --text-primary: #f9fafb;
-    --text-secondary: #d1d5db;
-    --text-muted: #9ca3af;
+    --text-primary: #f8fafc;
+    --text-secondary: #cbd5e1;
+    --text-muted: #94a3b8;
     
-    --border-subtle: rgba(255, 255, 255, 0.04);
-    --border-darker: rgba(0, 0, 0, 0.3);
+    --border-subtle: rgba(255, 255, 255, 0.09);
+    --border-darker: rgba(255, 255, 255, 0.15);
 
     --accent-long: #10b981;
     --accent-long-bg: rgba(16, 185, 129, 0.14);
-    --accent-short: #f43f5e;
-    --accent-short-bg: rgba(244, 63, 94, 0.14);
-    --accent-brand: #3b82f6;
-    --accent-brand-glow: rgba(59, 130, 246, 0.3);
+    --accent-short: #ef4444;
+    --accent-short-bg: rgba(239, 68, 68, 0.14);
+    --accent-brand: #38bdf8;
+    --accent-brand-glow: rgba(56, 189, 248, 0.2);
   }
 }
 
-/* NOTE: do not reset margin/padding here. Tailwind's preflight already does it inside a CSS layer,
-   and an unlayered reset would override every spacing utility (p-4, gap, px-3...). */
 * {
   box-sizing: border-box;
   -webkit-font-smoothing: antialiased;
@@ -134,129 +132,122 @@ body {
   color: var(--text-primary);
   min-height: 100vh;
   overflow-x: hidden;
-  transition: background-color 0.25s ease, color 0.25s ease;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
-/* Custom Neomorphic utility classes */
+/* Institutional Flat Utility Classes (Replaces Neomorphism) */
 @layer components {
 .neo-box {
   background-color: var(--bg-surface);
-  box-shadow: var(--shadow-extruded);
-  border-radius: 14px;
   border: 1px solid var(--border-subtle);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
 }
 
 .neo-box-sm {
   background-color: var(--bg-surface);
-  box-shadow: var(--shadow-extruded-sm);
-  border-radius: 10px;
   border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .neo-card {
   background-color: var(--bg-surface-card);
-  box-shadow: var(--shadow-extruded);
-  border-radius: 16px;
   border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .neo-inset {
   background-color: var(--bg-sunken);
-  box-shadow: var(--shadow-inset);
-  border-radius: 12px;
   border: 1px solid var(--border-darker);
+  border-radius: 6px;
 }
 
 .neo-inset-sm {
   background-color: var(--bg-sunken);
-  box-shadow: var(--shadow-inset-sm);
-  border-radius: 8px;
-  border: 1px solid var(--border-darker);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
 }
 
 .neo-btn {
   background-color: var(--bg-surface);
-  box-shadow: var(--shadow-extruded-sm);
-  border-radius: 10px;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-darker);
+  border-radius: 6px;
   color: var(--text-primary);
   cursor: pointer;
   font-family: inherit;
   font-weight: 600;
-  padding: 8px 16px;
+  padding: 6px 14px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  transition: all 0.15s ease;
+  gap: 6px;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
   user-select: none;
 }
 
 .neo-btn:hover {
-  box-shadow: var(--shadow-extruded);
-  transform: translateY(-1px);
+  background-color: var(--bg-sunken);
+  border-color: var(--border-darker);
 }
 
 .neo-btn:active, .neo-btn.active {
-  box-shadow: var(--shadow-inset-sm);
-  transform: translateY(1px);
+  background-color: var(--bg-sunken);
+  border-color: var(--accent-brand);
 }
 
 .neo-btn-primary {
-  background: linear-gradient(135deg, var(--accent-brand), #1d4ed8);
+  background-color: #0284c7;
   color: #ffffff;
-  box-shadow: 4px 4px 12px rgba(37, 99, 235, 0.35), -2px -2px 6px rgba(255, 255, 255, 0.1);
-  border: none;
+  border: 1px solid #0369a1;
 }
 
 .neo-btn-primary:hover {
-  box-shadow: 6px 6px 16px rgba(37, 99, 235, 0.45);
+  background-color: #0369a1;
+  border-color: #075985;
 }
 
 .neo-btn-primary:active {
-  box-shadow: inset 2px 2px 6px rgba(0, 0, 0, 0.4);
+  background-color: #075985;
 }
 
 .neo-btn-buy {
-  background: linear-gradient(135deg, #10b981, #059669);
+  background-color: #059669;
   color: #ffffff;
-  box-shadow: 4px 4px 12px rgba(16, 185, 129, 0.35), -2px -2px 6px rgba(255, 255, 255, 0.1);
-  border: none;
+  border: 1px solid #047857;
 }
 
 .neo-btn-buy:hover {
-  box-shadow: 6px 6px 18px rgba(16, 185, 129, 0.45);
+  background-color: #047857;
 }
 
 .neo-btn-buy:active {
-  box-shadow: inset 2px 2px 6px rgba(0, 0, 0, 0.35);
+  background-color: #065f46;
 }
 
 .neo-btn-sell {
-  background: linear-gradient(135deg, #f43f5e, #e11d48);
+  background-color: #dc2626;
   color: #ffffff;
-  box-shadow: 4px 4px 12px rgba(244, 63, 94, 0.35), -2px -2px 6px rgba(255, 255, 255, 0.1);
-  border: none;
+  border: 1px solid #b91c1c;
 }
 
 .neo-btn-sell:hover {
-  box-shadow: 6px 6px 18px rgba(244, 63, 94, 0.45);
+  background-color: #b91c1c;
 }
 
 .neo-btn-sell:active {
-  box-shadow: inset 2px 2px 6px rgba(0, 0, 0, 0.35);
+  background-color: #991b1b;
 }
 
 .neo-input {
   background-color: var(--bg-sunken);
-  box-shadow: var(--shadow-inset-sm);
   border: 1px solid var(--border-darker);
-  border-radius: 10px;
+  border-radius: 6px;
   color: var(--text-primary);
   font-family: var(--font-mono);
   font-size: 13px;
-  padding: 8px 12px;
+  padding: 7px 12px;
   outline: none;
   transition: border-color 0.15s ease;
   width: 100%;
@@ -273,38 +264,37 @@ body {
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-track {
   background: var(--bg-primary);
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--text-muted);
-  border-radius: 9999px;
-  opacity: 0.4;
+  background: var(--border-darker);
+  border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--text-secondary);
+  background: var(--text-muted);
 }
 
-/* Flash animations for live price ticks */
+/* Keyframes for market ticks */
 @keyframes flashGreen {
-  0% { color: #10b981; text-shadow: 0 0 8px rgba(16, 185, 129, 0.8); }
-  100% { color: inherit; text-shadow: none; }
+  0% { background-color: var(--accent-long-bg); }
+  100% { background-color: transparent; }
 }
 
 @keyframes flashRed {
-  0% { color: #f43f5e; text-shadow: 0 0 8px rgba(244, 63, 94, 0.8); }
-  100% { color: inherit; text-shadow: none; }
+  0% { background-color: var(--accent-short-bg); }
+  100% { background-color: transparent; }
 }
 
 .flash-up {
-  animation: flashGreen 0.6s ease-out;
+  animation: flashGreen 0.5s ease-out;
 }
 
 .flash-down {
-  animation: flashRed 0.6s ease-out;
+  animation: flashRed 0.5s ease-out;
 }
 
 }

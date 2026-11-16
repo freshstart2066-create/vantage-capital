@@ -770,10 +770,10 @@ export const ProfilePage: React.FC = () => {
               <div className="flex items-center justify-between py-1">
                 <div>
                   <span className="font-bold text-xs text-[var(--text-primary)] block">
-                    Tactile Audio Chimes
+                    Execution Audio Signals
                   </span>
                   <span className="text-[11px] text-[var(--text-muted)]">
-                    Auditory Web Audio feedback on order fills, TP/SL, and price alerts
+                    Auditory signals on order fills, take-profit triggers, and price alerts
                   </span>
                 </div>
                 <button

@@ -19,7 +19,7 @@ export const Footer: React.FC = () => {
             </p>
             <div className="flex items-center gap-2 text-[10px] text-[var(--text-muted)]">
               <Lock className="w-3 h-3 text-[var(--accent-long)]" />
-              <span>Client-Side Local Sandbox Security</span>
+              <span>Enterprise Ledger & Data Encryption</span>
             </div>
           </div>
 

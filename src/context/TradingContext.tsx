@@ -1789,7 +1789,7 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // Administrative Capital Allocation Action
   const adminSetAccountBalance = (newBalance: number, targetAccountId?: string, memo?: string) => {
     const cleanBalance = Math.max(0, Number(newBalance.toFixed(2)));
-    setAccount({
+    const updated: AccountState = {
       balance: cleanBalance,
       equity: cleanBalance,
       margin: 0,
@@ -1797,7 +1797,14 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       marginLevel: 0,
       startingBalance: cleanBalance,
       currency: 'USD',
-    });
+    };
+    setAccount(updated);
+    try {
+      localStorage.setItem(STORAGE_KEYS.ACCOUNT, JSON.stringify(updated));
+      if (user?.email) {
+        localStorage.setItem(LEDGER_KEY(user.email), String(cleanBalance));
+      }
+    } catch {}
     setToastMessage({
       text: `Capital allocated: $${cleanBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })} USD ${targetAccountId ? `for ${targetAccountId}` : ''} ${memo ? `(${memo})` : ''}`,
       type: 'success',

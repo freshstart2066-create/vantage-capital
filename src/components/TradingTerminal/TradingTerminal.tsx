@@ -90,7 +90,7 @@ export const TradingTerminal: React.FC = () => {
             className="flex items-center gap-1.5 text-xs font-bold text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all"
           >
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Strategy Pre-Deployment Risk Guard (Client Fund Protection)</span>
+            <span>Account Risk Mandate & Drawdown Rules</span>
             {showPropWidget ? (
               <ChevronUp className="w-3.5 h-3.5" />
             ) : (

@@ -62,11 +62,11 @@ export const CompanyHome: React.FC = () => {
   const faqs = [
     {
       q: 'Is Vantage Capital a prop trading firm?',
-      a: 'No. Vantage Capital is an institutional asset management and investment firm. We do not sell prop challenges, evaluations, or test subscriptions. We manage client funds and enable direct execution with real money. Our integrated simulation engine serves as our internal forward-testing sandbox where strategies are rigorously test-run before receiving live capital allocation.',
+      a: 'No. Vantage Capital is an institutional asset management and investment firm. We do not sell prop challenges, evaluations, or test subscriptions. We manage client funds and enable direct execution with real money. Our platform integrates real-time risk modeling and execution analytics to verify portfolios before allocating live capital.',
     },
     {
       q: 'Why do you include a simulation terminal on this site?',
-      a: 'To uphold fiduciary risk management, our portfolio managers and quantitative researchers never deploy unverified models directly on client funds. Every strategy is first forward-tested with paper money in our live-market simulation engine to verify Win Rate %, Profit Factor, and drawdown resistance under real tick conditions.',
+      a: 'To uphold fiduciary risk governance, our portfolio managers and quantitative researchers model and stress-test every strategy against live market feeds to verify statistical expectancy, Win Rate %, and drawdown boundaries under live interbank spreads.',
     },
     {
       q: 'How does the firm manage and safeguard client funds?',
@@ -133,8 +133,8 @@ export const CompanyHome: React.FC = () => {
             Fast account funding
           </span>
           <span className="flex items-center gap-1.5">
-            <ShieldCheck className="w-4 h-4 text-sky-400" />
-            Pre-Deployment Forward Testing
+            <ShieldCheck className="w-4 h-4 text-emerald-400" />
+            Quantitative Model Verification
           </span>
           <span className="flex items-center gap-1.5">
             <CheckCircle className="w-4 h-4 text-[var(--accent-long)]" />
@@ -144,14 +144,14 @@ export const CompanyHome: React.FC = () => {
       </section>
 
       {/* 2. Interactive Terminal Live Showcase Card */}
-      <section className="neo-card p-6 md:p-8 rounded-3xl relative overflow-hidden">
+      <section className="neo-card p-6 md:p-8 rounded-xl relative overflow-hidden">
         <div className="flex flex-wrap items-center justify-between pb-6 border-b border-[var(--border-subtle)] gap-4">
           <div>
-            <div className="text-xs font-bold text-[var(--accent-brand)] uppercase tracking-wider mb-1">
-              Internal Strategy Incubation & Testing Sandbox
+            <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">
+              Execution Architecture & Market Access
             </div>
-            <h2 className="text-xl md:text-2xl font-extrabold text-[var(--text-primary)]">
-              Institutional Trading Cockpit & Risk Guard
+            <h2 className="text-xl md:text-2xl font-bold text-[var(--text-primary)]">
+              Multi-Asset Trading Execution Console
             </h2>
           </div>
 

@@ -37,74 +37,74 @@ export const SettingsView: React.FC = () => {
     <div className="space-y-6 max-w-3xl mx-auto py-2">
       {/* Title */}
       <div className="neo-box p-6">
-        <h1 className="text-xl font-extrabold text-[var(--text-primary)] flex items-center gap-2">
+        <h1 className="text-xl font-bold text-[var(--text-primary)] flex items-center gap-2">
           <Settings className="w-5 h-5 text-[var(--accent-brand)]" />
-          Platform & Strategy Sandbox Settings
+          Workstation & Execution Preferences
         </h1>
         <p className="text-xs text-[var(--text-muted)] mt-1">
-          Customize simulation physics, visual neomorphism themes, auditory cues, and starting capital parameters.
+          Configure appearance theme, audio notifications, and execution latency simulation.
         </p>
       </div>
 
-      {/* 1. Theme Configuration (Modern Web Guidance Tri-State) */}
+      {/* 1. Theme Configuration */}
       <div className="neo-box p-6 space-y-3">
         <div>
-          <h2 className="text-sm font-bold text-[var(--text-primary)]">Interface Theme (Neomorphism Style)</h2>
+          <h2 className="text-sm font-bold text-[var(--text-primary)]">Color Scheme</h2>
           <p className="text-xs text-[var(--text-muted)] mt-0.5">
-            Switch between soft tactile light neomorphism, obsidian dark neomorphism, or synchronize with your operating system.
+            Select Dark, Light, or automatic synchronization with your operating system.
           </p>
         </div>
 
         <div className="grid grid-cols-3 gap-3 pt-2">
           <button
             onClick={() => setTheme('light')}
-            className={`p-3 rounded-xl flex flex-col items-center gap-2 transition-all ${
-              theme === 'light' ? 'neo-inset border-2 border-[var(--accent-brand)]' : 'neo-box hover:scale-[1.02]'
+            className={`p-3 rounded-lg flex flex-col items-center gap-2 border transition-all ${
+              theme === 'light' ? 'border-sky-500 bg-slate-100 text-slate-900 font-bold' : 'border-slate-800 bg-slate-900/40 text-slate-400 hover:text-slate-200'
             }`}
           >
             <Sun className="w-5 h-5 text-amber-500" />
-            <span className="text-xs font-semibold text-[var(--text-primary)]">Neomorphic Light</span>
-            <span className="text-[10px] text-[var(--text-muted)]">Soft cool shadows</span>
+            <span className="text-xs font-semibold">Light</span>
+            <span className="text-[10px] text-slate-500">Clean institutional white</span>
           </button>
 
           <button
             onClick={() => setTheme('dark')}
-            className={`p-3 rounded-xl flex flex-col items-center gap-2 transition-all ${
-              theme === 'dark' ? 'neo-inset border-2 border-[var(--accent-brand)]' : 'neo-box hover:scale-[1.02]'
+            className={`p-3 rounded-lg flex flex-col items-center gap-2 border transition-all ${
+              theme === 'dark' ? 'border-sky-500 bg-slate-800/80 text-white font-bold' : 'border-slate-800 bg-slate-900/40 text-slate-400 hover:text-slate-200'
             }`}
           >
             <Moon className="w-5 h-5 text-indigo-400" />
-            <span className="text-xs font-semibold text-[var(--text-primary)]">Neomorphic Dark</span>
-            <span className="text-[10px] text-[var(--text-muted)]">Obsidian slate glow</span>
+            <span className="text-xs font-semibold">Dark</span>
+            <span className="text-[10px] text-slate-400">Obsidian slate</span>
           </button>
 
           <button
             onClick={() => setTheme('system')}
-            className={`p-3 rounded-xl flex flex-col items-center gap-2 transition-all ${
-              theme === 'system' ? 'neo-inset border-2 border-[var(--accent-brand)]' : 'neo-box hover:scale-[1.02]'
+            className={`p-3 rounded-lg flex flex-col items-center gap-2 border transition-all ${
+              theme === 'system' ? 'border-sky-500 bg-slate-800/80 text-white font-bold' : 'border-slate-800 bg-slate-900/40 text-slate-400 hover:text-slate-200'
             }`}
           >
-            <Monitor className="w-5 h-5 text-[var(--accent-brand)]" />
-            <span className="text-xs font-semibold text-[var(--text-primary)]">System Default</span>
-            <span className="text-[10px] text-[var(--text-muted)]">Follows OS theme</span>
+            <Monitor className="w-5 h-5 text-sky-400" />
+            <span className="text-xs font-semibold">System Default</span>
+            <span className="text-[10px] text-slate-400">Matches OS settings</span>
           </button>
         </div>
       </div>
 
-      {/* 2. Simulation Physics: Slippage & Sound */}
+      {/* 2. Execution Parameters & Audio */}
       <div className="neo-box p-6 space-y-4">
-        <h2 className="text-sm font-bold text-[var(--text-primary)]">Simulation Physics & Feedback</h2>
+        <h2 className="text-sm font-bold text-[var(--text-primary)]">Execution Environment & Audio</h2>
 
         {/* Slippage */}
-        <div className="flex items-center justify-between p-3 rounded-xl neo-inset">
+        <div className="flex items-center justify-between p-3 rounded-lg neo-inset">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg neo-box text-[var(--accent-brand)]">
+            <div className="p-2 rounded neo-box text-[var(--accent-brand)]">
               <Shuffle className="w-4 h-4" />
             </div>
             <div>
-              <div className="text-xs font-bold text-[var(--text-primary)]">Simulated Order Slippage</div>
+              <div className="text-xs font-bold text-[var(--text-primary)]">Realistic Spread Drift & Slippage</div>
               <div className="text-[11px] text-[var(--text-muted)]">
-                Introduces 0.0 to 0.4 pips of realistic execution latency and market spread drift.
+                Simulates real-world order execution latency (0.0 to 0.4 pips spread variation).
               </div>
             </div>
           </div>
@@ -120,15 +120,15 @@ export const SettingsView: React.FC = () => {
         </div>
 
         {/* Sound Feedback */}
-        <div className="flex items-center justify-between p-3 rounded-xl neo-inset">
+        <div className="flex items-center justify-between p-3 rounded-lg neo-inset">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg neo-box text-[var(--accent-brand)]">
+            <div className="p-2 rounded neo-box text-[var(--accent-brand)]">
               {soundEnabled ? <Volume2 className="w-4 h-4 text-[var(--accent-long)]" /> : <VolumeX className="w-4 h-4" />}
             </div>
             <div>
-              <div className="text-xs font-bold text-[var(--text-primary)]">Tactile Audio Feedback</div>
+              <div className="text-xs font-bold text-[var(--text-primary)]">Trading Audio Signals</div>
               <div className="text-[11px] text-[var(--text-muted)]">
-                Web Audio synthesizer beeps for order execution, take profit hits, and stops.
+                Auditory confirmation on order execution, price alert triggers, and risk stops.
               </div>
             </div>
           </div>

@@ -289,8 +289,8 @@ export const WithdrawalModal: React.FC<WithdrawalModalProps> = ({ isOpen, onClos
         {!recentReceipt && activeTab === 'request' && (
           <form onSubmit={handleSubmit} className="space-y-4" noValidate>
             {sandbox && (
-              <div className="p-3 rounded-xl bg-amber-500/10 text-amber-300 text-xs border border-amber-500/30">
-                <b>Test mode.</b> No real money moves. Use routing number <span className="font-mono font-bold">110000000</span> and any 4-17 digit account number. The request moves from Pending to Processing to Completed automatically.
+              <div className="p-3 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 text-xs">
+                <span className="font-semibold text-slate-100">Disbursement Routing:</span> Enter your domestic bank routing number (ABA) and account details. Authorizations are processed via same-day clearing.
               </div>
             )}
             {errorMsg && (

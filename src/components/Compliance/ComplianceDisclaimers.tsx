@@ -22,7 +22,7 @@ export const ComplianceDisclaimers: React.FC = () => {
       <div className="neo-box p-6 space-y-3">
         <h2 className="text-base font-bold text-[var(--text-primary)] flex items-center gap-2">
           <ShieldCheck className="w-4 h-4 text-[var(--accent-brand)]" />
-          1. Asset Management & Pre-Deployment Strategy Testing Scope
+          1. Asset Management & Strategy Verification Scope
         </h2>
         <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
           Vantage Capital is an institutional asset management firm that manages client funds and executes real-money market operations with domestic Bank transfer settlement. We are not a prop firm.

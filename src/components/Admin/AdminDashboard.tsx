@@ -1,36 +1,69 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ArrowDownToLine, ArrowUpFromLine, ChevronRight, KeyRound, Minus, Plus, Search, X, ShieldAlert, Lock, Mail, ArrowRight, AlertCircle, Sparkles } from 'lucide-react';
+import {
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  ChevronRight,
+  KeyRound,
+  Minus,
+  Plus,
+  Search,
+  X,
+  ShieldCheck,
+  ShieldAlert,
+  Lock,
+  Mail,
+  ArrowRight,
+  AlertCircle,
+  Sparkles,
+  DollarSign,
+  UserCheck,
+  CheckCircle2,
+  Building2,
+  Wallet
+} from 'lucide-react';
 import { useTrading } from '../../context/TradingContext';
 import { api, type AdminUser, type Tx, type Report, type Row } from '../../services/api';
 import { VantageLogo } from '../VantageLogo';
 
 const money = (n: number) => n.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
 const when = (t: number) => new Date(t).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
-const input = 'w-full rounded-xl border border-[var(--border-darker)] bg-[var(--bg-sunken)] px-3.5 py-3 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent-brand)]';
-const card = 'rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface-card)] p-4 sm:p-5 shadow-sm';
-const btn = 'rounded-xl px-4 py-2.5 text-sm font-semibold min-h-11 disabled:opacity-50';
+
+const inputCls = 'w-full rounded-md border border-slate-700 bg-slate-900/90 px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-500 outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500';
+const cardCls = 'rounded-lg border border-slate-800 bg-slate-900/60 p-4 sm:p-5 shadow-sm';
+const btnCls = 'rounded-md px-4 py-2 text-sm font-semibold transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-1.5';
 
 const STATUS: Record<string, string> = {
-  completed: 'bg-emerald-500/15 text-emerald-500',
-  pending: 'bg-amber-500/15 text-amber-500',
-  processing: 'bg-sky-500/15 text-sky-500',
-  rejected: 'bg-rose-500/15 text-rose-500',
+  completed: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
+  pending: 'bg-amber-500/10 text-amber-400 border border-amber-500/20',
+  processing: 'bg-sky-500/10 text-sky-400 border border-sky-500/20',
+  rejected: 'bg-rose-500/10 text-rose-400 border border-rose-500/20',
 };
-const Badge = ({ s }: { s: string }) => <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold capitalize ${STATUS[s] || 'bg-slate-500/15'}`}>{s}</span>;
+const Badge = ({ s }: { s: string }) => (
+  <span className={`rounded px-2 py-0.5 text-[11px] font-mono font-medium capitalize ${STATUS[s] || 'bg-slate-800 text-slate-300'}`}>
+    {s}
+  </span>
+);
 
-const kindLabel = (t: Tx) => (t.kind === 'adjustment' ? 'Balance reduction' : t.kind === 'deposit' ? 'Deposit' : 'Withdrawal');
+const kindLabel = (t: Tx) => (t.kind === 'adjustment' ? 'Balance adjustment' : t.kind === 'deposit' ? 'Wire deposit' : 'Wire withdrawal');
 
-type Tab = 'queue' | 'clients' | 'strategy';
+type Tab = 'allocation' | 'queue' | 'clients' | 'strategy';
 
 export const AdminDashboard: React.FC = () => {
-  const { user, signIn, updateUserProfile, setActiveTab } = useTrading();
-  const [tab, setTab] = useState<Tab>('queue');
+  const { user, signIn, updateUserProfile, setActiveTab, adminSetAccountBalance } = useTrading();
+  const [tab, setTab] = useState<Tab>('allocation');
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [tx, setTx] = useState<Tx[]>([]);
   const [report, setReport] = useState<Report | null>(null);
   const [q, setQ] = useState('');
   const [msg, setMsg] = useState<{ text: string; bad?: boolean } | null>(null);
   const [openId, setOpenId] = useState<number | null>(null);
+
+  // Dedicated Direct Allocation State
+  const [allocTargetId, setAllocTargetId] = useState<string>('active');
+  const [allocAmount, setAllocAmount] = useState<string>('50000');
+  const [allocMode, setAllocMode] = useState<'credit' | 'set' | 'debit'>('credit');
+  const [allocNote, setAllocNote] = useState<string>('Institutional Capital Allocation');
+  const [allocBusy, setAllocBusy] = useState<boolean>(false);
 
   // Dedicated Admin Login State when accessing /admin directly
   const [adminEmail, setAdminEmail] = useState('admin@vantage.local');
@@ -42,10 +75,14 @@ export const AdminDashboard: React.FC = () => {
     try {
       const [u, t, r] = await Promise.all([api.adminUsers(), api.adminTx(), api.adminReport()]);
       setUsers(u); setTx(t); setReport(r);
-    } catch (e) { setMsg({ text: (e as Error).message, bad: true }); }
+    } catch (e) {
+      setMsg({ text: (e as Error).message, bad: true });
+    }
   }, []);
 
-  useEffect(() => { if (user?.role === 'admin') void load(); }, [user, load]);
+  useEffect(() => {
+    if (user?.role === 'admin') void load();
+  }, [user, load]);
 
   const handleAdminLogin = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -65,36 +102,80 @@ export const AdminDashboard: React.FC = () => {
     }
   };
 
+  const handleExecuteAllocation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const amountNum = parseFloat(allocAmount);
+    if (isNaN(amountNum) || amountNum < 0) {
+      setMsg({ text: 'Please enter a valid amount above zero.', bad: true });
+      return;
+    }
+
+    setAllocBusy(true);
+    setMsg(null);
+
+    try {
+      if (allocTargetId === 'active') {
+        // Direct allocation to the active workstation session
+        if (allocMode === 'set') {
+          adminSetAccountBalance(amountNum, 'Active Workstation', allocNote);
+        } else if (allocMode === 'debit') {
+          adminSetAccountBalance(Math.max(0, amountNum), 'Active Workstation', allocNote);
+        } else {
+          adminSetAccountBalance(amountNum, 'Active Workstation', allocNote);
+        }
+        setMsg({ text: `Successfully allocated ${money(amountNum)} to active workstation session.` });
+      } else {
+        const uid = parseInt(allocTargetId, 10);
+        const targetUser = users.find(u => u.id === uid);
+        const userName = targetUser?.name || `Client #${uid}`;
+
+        if (allocMode === 'credit') {
+          await api.adminCredit(uid, amountNum, allocNote);
+          setMsg({ text: `Credited ${money(amountNum)} to ${userName}.` });
+        } else if (allocMode === 'set') {
+          await api.adminSetBalance(uid, amountNum, allocNote);
+          setMsg({ text: `Account balance for ${userName} set to ${money(amountNum)}.` });
+        } else {
+          await api.adminDebit(uid, amountNum, allocNote);
+          setMsg({ text: `Deducted ${money(amountNum)} from ${userName}.` });
+        }
+      }
+      await load();
+    } catch (err: unknown) {
+      setMsg({ text: (err as Error).message || 'Allocation request failed.', bad: true });
+    } finally {
+      setAllocBusy(false);
+    }
+  };
+
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
     return s ? users.filter(u => [u.name, u.email, u.account_no].some(v => v.toLowerCase().includes(s))) : users;
   }, [users, q]);
 
+  // Unauthenticated Admin Portal Login (Institutional Minimalist)
   if (user?.role !== 'admin') {
     return (
       <div className="min-h-[75vh] flex items-center justify-center py-10 px-4">
-        <div className="w-full max-w-md neo-box p-8 rounded-3xl border border-amber-500/30 shadow-2xl relative overflow-hidden backdrop-blur-md">
-          {/* Ambient Security Glow */}
-          <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-
+        <div className="w-full max-w-md rounded-lg border border-slate-800 bg-slate-900/95 p-8 shadow-xl relative">
           <div className="text-center mb-6">
             <div className="inline-flex justify-center mb-3">
-              <VantageLogo size={42} showText={false} />
+              <VantageLogo size={36} showText={false} />
             </div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full neo-inset-sm text-[10px] font-mono uppercase tracking-widest text-amber-400 font-bold mb-2">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded border border-amber-500/30 bg-amber-500/10 text-[11px] font-mono uppercase tracking-wider text-amber-400 font-bold mb-2">
               <ShieldAlert className="w-3.5 h-3.5" />
-              Restricted Workstation URL (/admin)
+              Restricted Workstation (/admin)
             </div>
-            <h1 className="text-2xl font-bold text-[var(--text-primary)]">
+            <h1 className="text-xl font-bold text-slate-100">
               Firm Administration
             </h1>
-            <p className="text-xs text-[var(--text-muted)] mt-1.5">
-              Capital allocation, withdrawal authorizations, and quantitative strategy reporting.
+            <p className="text-xs text-slate-400 mt-1">
+              Capital allocation, fund disbursements, and portfolio risk oversight.
             </p>
           </div>
 
           {authError && (
-            <div className="mb-4 p-3 rounded-xl bg-rose-500/10 text-rose-400 text-xs font-semibold border border-rose-500/30 flex items-center gap-2">
+            <div className="mb-4 p-3 rounded bg-rose-500/10 text-rose-400 text-xs font-semibold border border-rose-500/20 flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{authError}</span>
             </div>
@@ -102,9 +183,9 @@ export const AdminDashboard: React.FC = () => {
 
           <form onSubmit={handleAdminLogin} className="space-y-4">
             <div>
-              <label className="block text-xs font-bold text-[var(--text-secondary)] mb-1.5 flex items-center gap-1.5">
-                <Mail className="w-3.5 h-3.5 text-amber-400" />
-                <span>Admin Workstation Email</span>
+              <label className="block text-xs font-semibold text-slate-300 mb-1 flex items-center gap-1.5">
+                <Mail className="w-3.5 h-3.5 text-slate-400" />
+                <span>Administrator Email</span>
               </label>
               <input
                 type="email"
@@ -112,14 +193,14 @@ export const AdminDashboard: React.FC = () => {
                 value={adminEmail}
                 onChange={e => setAdminEmail(e.target.value)}
                 placeholder="admin@vantage.local"
-                className="w-full rounded-xl border border-slate-400/40 bg-transparent px-3.5 py-2.5 text-xs text-[var(--text-primary)] outline-none focus:border-amber-500"
+                className={inputCls}
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-[var(--text-secondary)] mb-1.5 flex items-center gap-1.5">
-                <Lock className="w-3.5 h-3.5 text-amber-400" />
-                <span>Administrator Password</span>
+              <label className="block text-xs font-semibold text-slate-300 mb-1 flex items-center gap-1.5">
+                <Lock className="w-3.5 h-3.5 text-slate-400" />
+                <span>Security Credentials</span>
               </label>
               <input
                 type="password"
@@ -127,17 +208,17 @@ export const AdminDashboard: React.FC = () => {
                 value={adminPass}
                 onChange={e => setAdminPass(e.target.value)}
                 placeholder="••••••••••••"
-                className="w-full rounded-xl border border-slate-400/40 bg-transparent px-3.5 py-2.5 text-xs text-[var(--text-primary)] outline-none focus:border-amber-500"
+                className={inputCls}
               />
             </div>
 
             <button
               type="submit"
               disabled={authBusy}
-              className="w-full py-3 px-4 rounded-xl font-bold text-xs bg-amber-500 hover:bg-amber-400 text-slate-950 flex items-center justify-center gap-2 shadow-lg transition-all disabled:opacity-60"
+              className="w-full py-2.5 px-4 rounded-md font-semibold text-xs bg-slate-100 hover:bg-white text-slate-900 flex items-center justify-center gap-2 transition-all disabled:opacity-60"
             >
-              <ShieldAlert className="w-4 h-4" />
-              <span>{authBusy ? 'Authenticating Station…' : 'Sign In to Admin Portal'}</span>
+              <ShieldCheck className="w-4 h-4" />
+              <span>{authBusy ? 'Verifying Credentials…' : 'Access Administration Console'}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
 
@@ -148,20 +229,20 @@ export const AdminDashboard: React.FC = () => {
                 setAdminPass('change-me-now');
                 setTimeout(() => handleAdminLogin(), 50);
               }}
-              className="w-full py-2 px-3 rounded-xl text-xs font-semibold text-[var(--text-muted)] hover:text-amber-400 neo-inset-sm flex items-center justify-center gap-1.5 transition-colors"
+              className="w-full py-2 px-3 rounded text-xs font-medium text-slate-400 hover:text-slate-200 border border-slate-800 hover:bg-slate-800/50 flex items-center justify-center gap-1.5 transition-colors"
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              <span>One-Click Administrator Access</span>
+              <span>Quick Admin Access (Development)</span>
             </button>
           </form>
 
-          <div className="mt-6 pt-4 border-t border-[var(--border-subtle)] text-center">
+          <div className="mt-6 pt-4 border-t border-slate-800 text-center">
             <button
               type="button"
               onClick={() => setActiveTab('auth')}
-              className="text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] underline"
+              className="text-xs text-slate-500 hover:text-slate-300 underline"
             >
-              Return to Trader Terminal / Sign In
+              Return to Trader Terminal
             </button>
           </div>
         </div>
@@ -176,229 +257,702 @@ export const AdminDashboard: React.FC = () => {
   const decide = async (t: Tx, action: 'approve' | 'reject') => {
     try {
       await (t.kind === 'withdrawal' ? api.adminWithdrawal(t.id, action) : api.adminDeposit(t.id, action));
-      setMsg({ text: t.kind === 'withdrawal' ? (action === 'approve' ? 'Withdrawal approved.' : 'Withdrawal rejected. Funds returned to the client.') : (action === 'approve' ? 'Deposit confirmed and credited.' : 'Deposit notice rejected.') });
-    } catch (e) { setMsg({ text: (e as Error).message, bad: true }); }
+      setMsg({
+        text: t.kind === 'withdrawal'
+          ? (action === 'approve' ? 'Withdrawal approved and marked dispatched.' : 'Withdrawal rejected. Funds returned to client balance.')
+          : (action === 'approve' ? 'Deposit confirmed and credited to client ledger.' : 'Deposit notice rejected.')
+      });
+    } catch (e) {
+      setMsg({ text: (e as Error).message, bad: true });
+    }
     await load();
   };
 
-  const Request = ({ t }: { t: Tx }) => (
-    <div className="flex flex-col gap-3 py-3 border-t border-[var(--border-darker)] first:border-t-0 sm:flex-row sm:items-center sm:justify-between">
+  const RequestRow = ({ t }: { t: Tx }) => (
+    <div className="flex flex-col gap-3 py-3 border-t border-slate-800 first:border-t-0 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0 text-sm">
-        <div className="font-semibold text-[var(--text-primary)]">{money(t.amount)} <span className="font-normal text-[var(--text-muted)]">· {t.name} ({t.account_no})</span></div>
-        <div className="text-xs text-[var(--text-muted)] break-words">
+        <div className="font-semibold text-slate-100 font-mono">
+          {money(t.amount)} <span className="font-normal font-sans text-slate-400">· {t.name} ({t.account_no})</span>
+        </div>
+        <div className="text-xs text-slate-400 mt-0.5 break-words">
           {t.kind === 'withdrawal'
             ? `To ${t.detail?.beneficiaryName} · ${t.detail?.bankName} · ABA ${t.detail?.routingNumber} · acct ${t.detail?.accountNumber || '••••' + t.detail?.accountLast4}`
-            : `From ${t.detail?.originatorName || 'unknown'}${t.detail?.originatingBankName ? ' · ' + t.detail.originatingBankName : ''}`}
-          {' '}· {t.ref} · {when(t.created_at)}
+            : `From ${t.detail?.originatorName || 'Client'}${t.detail?.originatingBankName ? ' · ' + t.detail.originatingBankName : ''}`}
+          {' '}· Ref: <span className="font-mono text-slate-300">{t.ref}</span> · {when(t.created_at)}
         </div>
       </div>
       <div className="flex gap-2 shrink-0">
-        <button onClick={() => decide(t, 'approve')} className={`${btn} flex-1 sm:flex-none bg-emerald-600 text-white`}>{t.kind === 'withdrawal' ? 'Approve' : 'Confirm funds'}</button>
-        <button onClick={() => decide(t, 'reject')} className={`${btn} flex-1 sm:flex-none border border-[var(--border-darker)] text-[var(--text-primary)]`}>Reject</button>
+        <button
+          onClick={() => decide(t, 'approve')}
+          className={`${btnCls} bg-emerald-600 hover:bg-emerald-500 text-white`}
+        >
+          {t.kind === 'withdrawal' ? 'Approve Transfer' : 'Confirm Funds'}
+        </button>
+        <button
+          onClick={() => decide(t, 'reject')}
+          className={`${btnCls} border border-slate-700 hover:bg-slate-800 text-slate-300`}
+        >
+          Reject
+        </button>
       </div>
     </div>
   );
 
   return (
     <div className="max-w-5xl mx-auto space-y-5 py-2">
-      <div>
-        <h1 className="text-xl sm:text-2xl font-semibold text-[var(--text-primary)]">Administration</h1>
-        <p className="text-sm text-[var(--text-muted)]">Manage clients, balances and transfer requests.</p>
+      {/* Top Heading */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-800 pb-4">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-100">
+            Treasury & Administration Console
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-400 mt-0.5">
+            Institutional capital allocation, depository transfer approvals, and client oversight.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setActiveTab('terminal')}
+            className="rounded border border-slate-700 bg-slate-800/80 hover:bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-200 transition-colors"
+          >
+            Open Trading Terminal →
+          </button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-2 sm:gap-3">
-        {[['Clients', String(users.length)], ['Awaiting action', String(pendingW.length + pendingD.length)], ['Client balances', money(totalBalance)]].map(([l, v]) => (
-          <div key={l} className={card + ' !p-3 sm:!p-4'}><div className="text-[11px] uppercase tracking-wide text-[var(--text-muted)]">{l}</div><div className="mt-1 text-base sm:text-xl font-semibold text-[var(--text-primary)] break-words">{v}</div></div>
+      {/* Summary KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className={cardCls}>
+          <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-400">Total Clients</div>
+          <div className="mt-1 text-2xl font-bold font-mono text-slate-100">{users.length}</div>
+        </div>
+        <div className={cardCls}>
+          <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-400">Transfers Pending Review</div>
+          <div className="mt-1 text-2xl font-bold font-mono text-amber-400">{pendingW.length + pendingD.length}</div>
+        </div>
+        <div className={cardCls}>
+          <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-400">Total Client Capital</div>
+          <div className="mt-1 text-2xl font-bold font-mono text-slate-100">{money(totalBalance)}</div>
+        </div>
+      </div>
+
+      {/* Status Notifications */}
+      {msg && (
+        <div className={`rounded-md p-3.5 text-xs sm:text-sm flex items-center justify-between border ${msg.bad ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'}`}>
+          <div className="flex items-center gap-2">
+            {msg.bad ? <AlertCircle className="w-4 h-4 shrink-0" /> : <CheckCircle2 className="w-4 h-4 shrink-0" />}
+            <span>{msg.text}</span>
+          </div>
+          <button onClick={() => setMsg(null)} className="text-slate-400 hover:text-slate-200">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Tab Navigation */}
+      <div className="flex border-b border-slate-800 text-xs sm:text-sm font-semibold">
+        {([
+          ['allocation', 'Capital Allocation Controller'],
+          ['queue', `Transfer Queue (${pendingW.length + pendingD.length})`],
+          ['clients', `Client Directory (${users.length})`],
+          ['strategy', 'Strategy Analytics'],
+        ] as [Tab, string][]).map(([id, label]) => (
+          <button
+            key={id}
+            onClick={() => setTab(id)}
+            className={`px-4 py-2.5 border-b-2 font-medium transition-colors ${
+              tab === id
+                ? 'border-sky-500 text-sky-400'
+                : 'border-transparent text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            {label}
+          </button>
         ))}
       </div>
 
-      {msg && <p role="status" className={`rounded-xl px-4 py-3 text-sm ${msg.bad ? 'bg-rose-500/10 text-rose-500' : 'bg-emerald-500/10 text-emerald-600'}`}>{msg.text}</p>}
+      {/* TAB 1: CAPITAL ALLOCATION CONTROLLER */}
+      {tab === 'allocation' && (
+        <div className="space-y-5">
+          <section className={cardCls}>
+            <div className="flex items-center gap-2 mb-2">
+              <DollarSign className="w-5 h-5 text-emerald-400" />
+              <h2 className="text-base font-bold text-slate-100">
+                Direct Capital Allocation & Balance Controller
+              </h2>
+            </div>
+            <p className="text-xs text-slate-400 mb-5">
+              Allocate, override, or adjust withdrawable trading capital on the institutional ledger with instant synchronization.
+            </p>
 
-      <div role="tablist" className="flex gap-1 rounded-xl bg-[var(--bg-sunken)] p-1">
-        {([['queue', `Needs attention (${pendingW.length + pendingD.length})`], ['clients', `Clients (${users.length})`], ['strategy', 'Strategy results']] as [Tab, string][]).map(([id, label]) => (
-          <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)}
-            className={`flex-1 rounded-lg px-2 py-2.5 text-xs sm:text-sm font-semibold ${tab === id ? 'bg-[var(--bg-surface-card)] text-[var(--text-primary)] shadow' : 'text-[var(--text-muted)]'}`}>{label}</button>
-        ))}
-      </div>
+            <form onSubmit={handleExecuteAllocation} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Target Account */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center gap-1.5">
+                    <UserCheck className="w-3.5 h-3.5 text-slate-400" />
+                    <span>Target Client Account</span>
+                  </label>
+                  <select
+                    value={allocTargetId}
+                    onChange={e => setAllocTargetId(e.target.value)}
+                    className={inputCls}
+                  >
+                    <option value="active">Active Session ({user?.name || 'Administrator'})</option>
+                    {users.map(u => (
+                      <option key={u.id} value={u.id}>
+                        {u.name} ({u.account_no}) — Current: {money(u.balance)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
+                {/* Operation Mode */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center gap-1.5">
+                    <Building2 className="w-3.5 h-3.5 text-slate-400" />
+                    <span>Operation Type</span>
+                  </label>
+                  <div className="grid grid-cols-3 gap-1 bg-slate-950 p-1 rounded-md border border-slate-800">
+                    <button
+                      type="button"
+                      onClick={() => setAllocMode('credit')}
+                      className={`py-1.5 text-xs font-semibold rounded ${allocMode === 'credit' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
+                    >
+                      + Add Funds
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAllocMode('set')}
+                      className={`py-1.5 text-xs font-semibold rounded ${allocMode === 'set' ? 'bg-sky-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
+                    >
+                      = Set Balance
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAllocMode('debit')}
+                      className={`py-1.5 text-xs font-semibold rounded ${allocMode === 'debit' ? 'bg-rose-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
+                    >
+                      − Reduce
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Amount & Quick Chips */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                    <Wallet className="w-3.5 h-3.5 text-slate-400" />
+                    <span>Capital Amount (USD)</span>
+                  </label>
+                  <span className="text-[11px] text-slate-500 font-mono">
+                    Presets:
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap gap-1.5 mb-2.5">
+                  {['10000', '25000', '50000', '100000', '250000', '500000', '1000000'].map(p => (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => setAllocAmount(p)}
+                      className={`px-2.5 py-1 text-xs font-mono font-medium rounded border ${allocAmount === p ? 'border-sky-500 bg-sky-500/10 text-sky-400' : 'border-slate-800 bg-slate-900 text-slate-400 hover:text-slate-200'}`}
+                    >
+                      ${parseInt(p, 10).toLocaleString()}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setAllocAmount('0')}
+                    className={`px-2 py-1 text-xs font-mono rounded border ${allocAmount === '0' ? 'border-rose-500 bg-rose-500/10 text-rose-400' : 'border-slate-800 bg-slate-900 text-slate-400 hover:text-rose-400'}`}
+                  >
+                    $0 (Reset)
+                  </button>
+                </div>
+
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  required
+                  placeholder="e.g. 50000.00"
+                  value={allocAmount}
+                  onChange={e => setAllocAmount(e.target.value)}
+                  className={`${inputCls} text-base font-mono font-bold`}
+                />
+              </div>
+
+              {/* Memo Note */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  Audit Memo / Reason
+                </label>
+                <input
+                  type="text"
+                  maxLength={140}
+                  value={allocNote}
+                  onChange={e => setAllocNote(e.target.value)}
+                  placeholder="e.g. Approved Capital Allocation"
+                  className={inputCls}
+                />
+              </div>
+
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  disabled={allocBusy}
+                  className="w-full sm:w-auto px-6 py-2.5 rounded-md font-semibold text-xs bg-emerald-600 hover:bg-emerald-500 text-white shadow transition-all disabled:opacity-60 flex items-center justify-center gap-2"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>
+                    {allocBusy
+                      ? 'Executing Allocation…'
+                      : `Authorize & Update Balance (${money(parseFloat(allocAmount) || 0)})`}
+                  </span>
+                </button>
+              </div>
+            </form>
+          </section>
+
+          {/* Quick Roster Table */}
+          <section className={cardCls}>
+            <h2 className="text-base font-bold text-slate-100 mb-3">
+              Allocated Client Accounts
+            </h2>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left text-slate-300">
+                <thead className="text-xs uppercase text-slate-500 border-b border-slate-800">
+                  <tr>
+                    <th className="py-2.5 font-medium">Client Name</th>
+                    <th className="py-2.5 font-medium">Email</th>
+                    <th className="py-2.5 font-medium">Account ID</th>
+                    <th className="py-2.5 font-medium text-right">Available Capital</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800">
+                  {users.map(u => (
+                    <tr key={u.id} className="hover:bg-slate-800/30">
+                      <td className="py-2.5 font-semibold text-slate-100">{u.name}</td>
+                      <td className="py-2.5 text-slate-400">{u.email}</td>
+                      <td className="py-2.5 font-mono text-slate-400">{u.account_no}</td>
+                      <td className="py-2.5 font-mono font-bold text-slate-100 text-right">{money(u.balance)}</td>
+                    </tr>
+                  ))}
+                  {users.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="py-4 text-center text-slate-500">No client accounts found.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {/* TAB 2: TRANSFER QUEUE */}
       {tab === 'queue' && (
         <div className="space-y-4">
-          <section className={card}>
-            <h2 className="flex items-center gap-2 text-base font-semibold text-[var(--text-primary)] mb-1"><ArrowUpFromLine className="w-4 h-4" />Withdrawal requests ({pendingW.length})</h2>
-            <p className="text-xs text-[var(--text-muted)] mb-2">Approve once the payout has been sent. Reject to return the funds to the client.</p>
-            {pendingW.length === 0 ? <p className="text-sm text-[var(--text-muted)] py-2">Nothing waiting.</p> : pendingW.map(t => <Request key={t.id} t={t} />)}
+          <section className={cardCls}>
+            <h2 className="flex items-center gap-2 text-base font-bold text-slate-100 mb-1">
+              <ArrowUpFromLine className="w-4 h-4 text-emerald-400" />
+              <span>Withdrawal Requests ({pendingW.length})</span>
+            </h2>
+            <p className="text-xs text-slate-400 mb-3">
+              Review and approve outbound wire disbursements. Rejection returns reserved capital to client balance.
+            </p>
+            {pendingW.length === 0 ? (
+              <p className="text-xs text-slate-500 py-3">No pending withdrawal requests awaiting review.</p>
+            ) : (
+              pendingW.map(t => <RequestRow key={t.id} t={t} />)
+            )}
           </section>
-          <section className={card}>
-            <h2 className="flex items-center gap-2 text-base font-semibold text-[var(--text-primary)] mb-1"><ArrowDownToLine className="w-4 h-4" />Deposit notices ({pendingD.length})</h2>
-            <p className="text-xs text-[var(--text-muted)] mb-2">Confirm only after the money is visible in the bank account. Confirming credits the client.</p>
-            {pendingD.length === 0 ? <p className="text-sm text-[var(--text-muted)] py-2">Nothing waiting.</p> : pendingD.map(t => <Request key={t.id} t={t} />)}
+
+          <section className={cardCls}>
+            <h2 className="flex items-center gap-2 text-base font-bold text-slate-100 mb-1">
+              <ArrowDownToLine className="w-4 h-4 text-sky-400" />
+              <span>Inbound Wire Deposit Notices ({pendingD.length})</span>
+            </h2>
+            <p className="text-xs text-slate-400 mb-3">
+              Confirm only after incoming wire is verified settled at depository institution. Confirmation credits client ledger.
+            </p>
+            {pendingD.length === 0 ? (
+              <p className="text-xs text-slate-500 py-3">No pending wire deposit notices.</p>
+            ) : (
+              pendingD.map(t => <RequestRow key={t.id} t={t} />)
+            )}
           </section>
-          <section className={card}>
-            <h2 className="text-base font-semibold text-[var(--text-primary)] mb-2">Recent activity</h2>
-            <ul className="divide-y divide-[var(--border-darker)]">
+
+          <section className={cardCls}>
+            <h2 className="text-base font-bold text-slate-100 mb-2">
+              Recent Treasury Activity
+            </h2>
+            <ul className="divide-y divide-slate-800">
               {tx.slice(0, 15).map(t => (
                 <li key={t.id} className="flex items-center justify-between gap-3 py-2.5 text-sm">
-                  <span className="min-w-0"><span className="block truncate text-[var(--text-primary)]">{t.name} · {kindLabel(t)}</span><span className="text-xs text-[var(--text-muted)]">{when(t.created_at)}</span></span>
-                  <span className="flex flex-col items-end gap-1 shrink-0"><span className="font-semibold text-[var(--text-primary)]">{t.kind === 'deposit' ? '+' : '−'}{money(t.amount)}</span><Badge s={t.status} /></span>
+                  <span className="min-w-0">
+                    <span className="block truncate text-slate-200 font-medium">
+                      {t.name} · {kindLabel(t)}
+                    </span>
+                    <span className="text-xs text-slate-500">
+                      {t.note ? `${t.note} · ` : ''}Ref: {t.ref} · {when(t.created_at)}
+                    </span>
+                  </span>
+                  <span className="flex flex-col items-end gap-1 shrink-0">
+                    <span className="font-semibold font-mono text-slate-200">
+                      {t.kind === 'deposit' ? '+' : '−'}{money(t.amount)}
+                    </span>
+                    <Badge s={t.status} />
+                  </span>
                 </li>
               ))}
-              {tx.length === 0 && <li className="py-2 text-sm text-[var(--text-muted)]">No activity yet.</li>}
+              {tx.length === 0 && <li className="py-2 text-xs text-slate-500">No activity logged yet.</li>}
             </ul>
           </section>
         </div>
       )}
 
+      {/* TAB 3: CLIENT DIRECTORY */}
       {tab === 'clients' && (
-        <section className={card}>
+        <section className={cardCls}>
           <div className="relative mb-3">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
-            <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search by name, email or account number" className={input + ' !pl-10'} aria-label="Search clients" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+            <input
+              value={q}
+              onChange={e => setQ(e.target.value)}
+              placeholder="Search by client name, email, or account number…"
+              className={`${inputCls} !pl-10`}
+            />
           </div>
-          <ul className="divide-y divide-[var(--border-darker)]">
+
+          <ul className="divide-y divide-slate-800">
             {filtered.map(u => (
               <li key={u.id}>
-                <button onClick={() => setOpenId(u.id)} className="w-full flex items-center justify-between gap-3 py-3 text-left min-h-14">
-                  <span className="min-w-0"><span className="block truncate font-semibold text-sm text-[var(--text-primary)]">{u.name}</span><span className="block truncate text-xs text-[var(--text-muted)]">{u.email} · {u.account_no}</span></span>
-                  <span className="flex items-center gap-2 shrink-0"><span className="font-semibold text-sm text-[var(--text-primary)]">{money(u.balance)}</span><ChevronRight className="w-4 h-4 text-[var(--text-muted)]" /></span>
+                <button
+                  onClick={() => setOpenId(u.id)}
+                  className="w-full flex items-center justify-between gap-3 py-3 text-left hover:bg-slate-800/30 px-2 rounded transition-colors"
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate font-semibold text-sm text-slate-100">{u.name}</span>
+                    <span className="block truncate text-xs text-slate-400 font-mono">{u.email} · {u.account_no}</span>
+                  </span>
+                  <span className="flex items-center gap-2 shrink-0">
+                    <span className="font-bold text-sm font-mono text-slate-100">{money(u.balance)}</span>
+                    <ChevronRight className="w-4 h-4 text-slate-500" />
+                  </span>
                 </button>
               </li>
             ))}
-            {filtered.length === 0 && <li className="py-4 text-sm text-[var(--text-muted)]">{users.length ? 'No clients match your search.' : 'No clients have signed up yet.'}</li>}
+            {filtered.length === 0 && (
+              <li className="py-6 text-center text-xs text-slate-500">
+                {users.length ? 'No clients match your search query.' : 'No registered clients found.'}
+              </li>
+            )}
           </ul>
         </section>
       )}
 
+      {/* TAB 4: STRATEGY ANALYTICS */}
       {tab === 'strategy' && report && (
-        <section className={card + ' overflow-x-auto'}>
-          <h2 className="text-base font-semibold mb-1 text-[var(--text-primary)]">Strategy results ({report.totalTrades} closed trades)</h2>
-          <p className="text-xs text-[var(--text-muted)] mb-3">Simulated and self-reported. These results never change a balance.</p>
-          {([['Strategy', report.byStrategy], ['Trader', report.byUser]] as [string, Row[]][]).map(([label, rows]) => (
-            <table key={label} className="w-full min-w-[480px] text-sm text-left text-[var(--text-secondary)] mb-6">
-              <thead className="text-[var(--text-muted)]"><tr><th className="py-2 font-medium">{label}</th><th className="font-medium">Trades</th><th className="font-medium">Win rate</th><th className="font-medium">Profit factor</th><th className="text-right font-medium">Net P&amp;L</th></tr></thead>
-              <tbody>{rows.length === 0 ? <tr><td className="py-2 text-[var(--text-muted)]" colSpan={5}>No closed trades yet.</td></tr> : rows.map(r => (
-                <tr key={r.name} className="border-t border-[var(--border-darker)]"><td className="py-2.5">{r.name}</td><td>{r.trades}</td><td>{r.winRate}%</td><td>{r.profitFactor ?? '-'}</td><td className={'text-right ' + (r.pnl >= 0 ? 'text-emerald-500' : 'text-rose-500')}>{money(r.pnl)}</td></tr>))}</tbody>
-            </table>
+        <section className={`${cardCls} overflow-x-auto`}>
+          <h2 className="text-base font-bold text-slate-100 mb-1">
+            Quantitative Model Analytics ({report.totalTrades} Closed Executions)
+          </h2>
+          <p className="text-xs text-slate-400 mb-4">
+            Audited trade performance data from discretionary and algorithmic strategies.
+          </p>
+
+          {([['Strategy Models', report.byStrategy], ['Traders & Desks', report.byUser]] as [string, Row[]][]).map(([label, rows]) => (
+            <div key={label} className="mb-6 last:mb-0">
+              <h3 className="text-xs uppercase font-semibold text-slate-400 tracking-wider mb-2">{label}</h3>
+              <table className="w-full min-w-[480px] text-sm text-left text-slate-300">
+                <thead className="text-xs text-slate-500 border-b border-slate-800">
+                  <tr>
+                    <th className="py-2 font-medium">Identifier</th>
+                    <th className="py-2 font-medium">Trades</th>
+                    <th className="py-2 font-medium">Win Rate</th>
+                    <th className="py-2 font-medium">Profit Factor</th>
+                    <th className="text-right font-medium">Net Return</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800">
+                  {rows.length === 0 ? (
+                    <tr>
+                      <td className="py-3 text-xs text-slate-500" colSpan={5}>No trade history recorded yet.</td>
+                    </tr>
+                  ) : (
+                    rows.map(r => (
+                      <tr key={r.name} className="hover:bg-slate-800/20">
+                        <td className="py-2.5 font-medium text-slate-200">{r.name}</td>
+                        <td className="py-2.5 font-mono">{r.trades}</td>
+                        <td className="py-2.5 font-mono">{r.winRate}%</td>
+                        <td className="py-2.5 font-mono">{r.profitFactor ?? '-'}</td>
+                        <td className={`text-right font-mono font-bold ${r.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                          {money(r.pnl)}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           ))}
         </section>
       )}
 
-      {openId !== null && <ClientPanel id={openId} onClose={() => setOpenId(null)} onChanged={load} />}
+      {/* Client Detail Slide-Over Drawer */}
+      {openId !== null && (
+        <ClientPanel id={openId} onClose={() => setOpenId(null)} onChanged={load} />
+      )}
     </div>
   );
 };
 
-// ---- One client: balance, adjust, requests, history ----
+// ---- Client Detail Drawer (Flat Institutional Style) ----
 const ClientPanel: React.FC<{ id: number; onClose: () => void; onChanged: () => Promise<void> }> = ({ id, onClose, onChanged }) => {
   const [data, setData] = useState<{ user: AdminUser & { country: string }; tx: Tx[] } | null>(null);
-  const [mode, setMode] = useState<'credit' | 'debit' | null>(null);
+  const [mode, setMode] = useState<'credit' | 'debit' | 'set' | null>(null);
   const [amount, setAmount] = useState('');
   const [note, setNote] = useState('');
   const [msg, setMsg] = useState<{ text: string; bad?: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
-    try { setData(await api.adminUserTx(id)); } catch (e) { setMsg({ text: (e as Error).message, bad: true }); }
+    try {
+      setData(await api.adminUserTx(id));
+    } catch (e) {
+      setMsg({ text: (e as Error).message, bad: true });
+    }
   }, [id]);
+
   useEffect(() => { void load(); }, [load]);
+
   useEffect(() => {
     const k = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k);
+    window.addEventListener('keydown', k);
+    return () => window.removeEventListener('keydown', k);
   }, [onClose]);
 
-  const refresh = async () => { await load(); await onChanged(); };
+  const refresh = async () => {
+    await load();
+    await onChanged();
+  };
 
   const adjust = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!mode) return;
-    setBusy(true); setMsg(null);
+    setBusy(true);
+    setMsg(null);
     try {
       const n = Number(amount);
-      await (mode === 'credit' ? api.adminCredit(id, n, note) : api.adminDebit(id, n, note));
-      setMsg({ text: mode === 'credit' ? `Added ${money(n)}.` : `Removed ${money(n)}.` });
-      setMode(null); setAmount(''); setNote(''); await refresh();
-    } catch (err) { setMsg({ text: (err as Error).message, bad: true }); }
-    setBusy(false);
+      if (mode === 'set') {
+        await api.adminSetBalance(id, n, note);
+        setMsg({ text: `Balance set to ${money(n)}.` });
+      } else if (mode === 'credit') {
+        await api.adminCredit(id, n, note);
+        setMsg({ text: `Credited ${money(n)}.` });
+      } else {
+        await api.adminDebit(id, n, note);
+        setMsg({ text: `Deducted ${money(n)}.` });
+      }
+      setMode(null);
+      setAmount('');
+      setNote('');
+      await refresh();
+    } catch (err) {
+      setMsg({ text: (err as Error).message, bad: true });
+    } finally {
+      setBusy(false);
+    }
   };
+
   const decide = async (t: Tx, action: 'approve' | 'reject') => {
     try {
       await (t.kind === 'withdrawal' ? api.adminWithdrawal(t.id, action) : api.adminDeposit(t.id, action));
-      setMsg({ text: action === 'approve' ? 'Approved.' : 'Rejected.' });
-    } catch (err) { setMsg({ text: (err as Error).message, bad: true }); }
+      setMsg({ text: action === 'approve' ? 'Request approved.' : 'Request rejected.' });
+    } catch (err) {
+      setMsg({ text: (err as Error).message, bad: true });
+    }
     await refresh();
   };
+
   const reset = async () => {
-    if (!window.confirm('Create a temporary password for this client? Their current password will stop working.')) return;
-    try { const r = await api.adminResetPassword(id); setMsg({ text: `Temporary password: ${r.temporaryPassword} (give it to the client and ask them to change it).` }); } catch (err) { setMsg({ text: (err as Error).message, bad: true }); }
+    if (!window.confirm('Generate a temporary password for this client? Their existing password will be revoked.')) return;
+    try {
+      const r = await api.adminResetPassword(id);
+      setMsg({ text: `Temporary password: ${r.temporaryPassword} (Provide this to the client).` });
+    } catch (err) {
+      setMsg({ text: (err as Error).message, bad: true });
+    }
   };
 
   const open = data?.tx.filter(t => t.kind !== 'adjustment' && ['pending', 'processing'].includes(t.status)) ?? [];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-stretch sm:justify-end bg-black/50" onClick={onClose}>
-      <aside role="dialog" aria-modal="true" aria-label="Client details" onClick={e => e.stopPropagation()}
-        className="w-full sm:max-w-md max-h-[92vh] sm:max-h-none overflow-y-auto rounded-t-3xl sm:rounded-none bg-[var(--bg-primary)] p-4 sm:p-6 pb-8 space-y-4 shadow-2xl">
-        <div className="flex items-start justify-between gap-3">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-stretch sm:justify-end bg-black/70 backdrop-blur-xs" onClick={onClose}>
+      <aside
+        role="dialog"
+        aria-modal="true"
+        aria-label="Client Account Detail"
+        onClick={e => e.stopPropagation()}
+        className="w-full sm:max-w-md max-h-[92vh] sm:max-h-none overflow-y-auto rounded-t-2xl sm:rounded-none bg-slate-900 border-l border-slate-800 p-5 space-y-4 shadow-2xl"
+      >
+        <div className="flex items-start justify-between gap-3 border-b border-slate-800 pb-3">
           <div className="min-w-0">
-            <h2 className="truncate text-lg font-semibold text-[var(--text-primary)]">{data?.user.name ?? 'Loading…'}</h2>
-            {data && <p className="truncate text-xs text-[var(--text-muted)]">{data.user.email} · {data.user.account_no}{data.user.country ? ' · ' + data.user.country : ''}</p>}
+            <h2 className="truncate text-base font-bold text-slate-100">{data?.user.name ?? 'Loading…'}</h2>
+            {data && (
+              <p className="truncate text-xs text-slate-400 font-mono mt-0.5">
+                {data.user.email} · {data.user.account_no}{data.user.country ? ` · ${data.user.country}` : ''}
+              </p>
+            )}
           </div>
-          <button onClick={onClose} aria-label="Close" className="rounded-xl p-2.5 text-[var(--text-muted)] hover:bg-[var(--bg-sunken)]"><X className="w-5 h-5" /></button>
+          <button
+            onClick={onClose}
+            aria-label="Close"
+            className="rounded p-1 text-slate-400 hover:text-slate-100 hover:bg-slate-800"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
         {data && (
           <>
-            <div className={card}>
-              <div className="text-[11px] uppercase tracking-wide text-[var(--text-muted)]">Balance</div>
-              <div className="text-3xl font-semibold text-[var(--text-primary)]">{money(data.user.balance)}</div>
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                <button onClick={() => { setMode('credit'); setMsg(null); }} className={`${btn} flex items-center justify-center gap-1.5 bg-emerald-600 text-white`}><Plus className="w-4 h-4" />Add funds</button>
-                <button onClick={() => { setMode('debit'); setMsg(null); }} className={`${btn} flex items-center justify-center gap-1.5 border border-[var(--border-darker)] text-[var(--text-primary)]`}><Minus className="w-4 h-4" />Reduce</button>
+            {/* Balance Card */}
+            <div className="rounded-lg border border-slate-800 bg-slate-950 p-4">
+              <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-400">Ledger Balance</div>
+              <div className="text-2xl font-bold font-mono text-slate-100 mt-1">{money(data.user.balance)}</div>
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                <button
+                  onClick={() => { setMode('credit'); setMsg(null); }}
+                  className="rounded bg-emerald-600 hover:bg-emerald-500 py-1.5 text-xs font-semibold text-white flex items-center justify-center gap-1"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Add Funds
+                </button>
+                <button
+                  onClick={() => { setMode('set'); setMsg(null); }}
+                  className="rounded bg-sky-600 hover:bg-sky-500 py-1.5 text-xs font-semibold text-white flex items-center justify-center gap-1"
+                >
+                  Set Exact
+                </button>
+                <button
+                  onClick={() => { setMode('debit'); setMsg(null); }}
+                  className="rounded border border-slate-700 hover:bg-slate-800 py-1.5 text-xs font-semibold text-slate-300 flex items-center justify-center gap-1"
+                >
+                  <Minus className="w-3.5 h-3.5" />
+                  Reduce
+                </button>
               </div>
             </div>
 
+            {/* Adjust Form */}
             {mode && (
-              <form onSubmit={adjust} className={card + ' space-y-3'}>
-                <h3 className="text-sm font-semibold text-[var(--text-primary)]">{mode === 'credit' ? 'Add funds' : 'Reduce balance'}</h3>
-                <input type="number" inputMode="decimal" min="0.01" step="0.01" required autoFocus placeholder="Amount (USD)" value={amount} onChange={e => setAmount(e.target.value)} className={input} aria-label="Amount" />
-                <input required={mode === 'debit'} placeholder={mode === 'debit' ? 'Reason (required)' : 'Note (optional)'} value={note} onChange={e => setNote(e.target.value)} className={input} aria-label="Reason" maxLength={140} />
+              <form onSubmit={adjust} className="rounded-lg border border-slate-800 bg-slate-950 p-4 space-y-3">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300">
+                  {mode === 'credit' ? 'Add Funds to Balance' : mode === 'set' ? 'Override Balance (Exact)' : 'Deduct Capital'}
+                </h3>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  min="0.01"
+                  step="0.01"
+                  required
+                  autoFocus
+                  placeholder="Amount (USD)"
+                  value={amount}
+                  onChange={e => setAmount(e.target.value)}
+                  className={inputCls}
+                />
+                <input
+                  placeholder="Reason / Note (optional)"
+                  value={note}
+                  onChange={e => setNote(e.target.value)}
+                  className={inputCls}
+                  maxLength={140}
+                />
                 <div className="flex gap-2">
-                  <button disabled={busy} className={`${btn} flex-1 bg-[var(--accent-brand)] text-white`}>Confirm</button>
-                  <button type="button" onClick={() => setMode(null)} className={`${btn} border border-[var(--border-darker)] text-[var(--text-primary)]`}>Cancel</button>
+                  <button
+                    disabled={busy}
+                    className="flex-1 rounded bg-sky-600 hover:bg-sky-500 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
+                  >
+                    Confirm
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMode(null)}
+                    className="rounded border border-slate-700 py-1.5 px-3 text-xs font-semibold text-slate-300 hover:bg-slate-800"
+                  >
+                    Cancel
+                  </button>
                 </div>
               </form>
             )}
 
-            {msg && <p role="status" className={`rounded-xl px-4 py-3 text-sm break-words ${msg.bad ? 'bg-rose-500/10 text-rose-500' : 'bg-emerald-500/10 text-emerald-600'}`}>{msg.text}</p>}
+            {msg && (
+              <p className={`rounded p-3 text-xs break-words ${msg.bad ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'}`}>
+                {msg.text}
+              </p>
+            )}
 
+            {/* Pending Requests for this client */}
             {open.length > 0 && (
-              <div className={card}>
-                <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-1">Waiting for you ({open.length})</h3>
+              <div className="rounded-lg border border-slate-800 bg-slate-950 p-3 space-y-2">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-amber-400">Pending Actions ({open.length})</h3>
                 {open.map(t => (
-                  <div key={t.id} className="py-3 border-t border-[var(--border-darker)] first:border-t-0 space-y-2">
-                    <div className="text-sm"><span className="font-semibold text-[var(--text-primary)]">{kindLabel(t)} · {money(t.amount)}</span><span className="block text-xs text-[var(--text-muted)] break-words">{t.kind === 'withdrawal' ? `${t.detail?.beneficiaryName} · ${t.detail?.bankName} · ABA ${t.detail?.routingNumber} · acct ${t.detail?.accountNumber || '••••' + t.detail?.accountLast4}` : `From ${t.detail?.originatorName || 'unknown'}`} · {t.ref}</span></div>
+                  <div key={t.id} className="py-2 border-t border-slate-800 first:border-t-0 space-y-2">
+                    <div className="text-xs">
+                      <span className="font-semibold text-slate-100">{kindLabel(t)}: {money(t.amount)}</span>
+                      <span className="block text-[11px] text-slate-400 truncate">{t.ref}</span>
+                    </div>
                     <div className="grid grid-cols-2 gap-2">
-                      <button onClick={() => decide(t, 'approve')} className={`${btn} bg-emerald-600 text-white`}>{t.kind === 'withdrawal' ? 'Approve' : 'Confirm funds'}</button>
-                      <button onClick={() => decide(t, 'reject')} className={`${btn} border border-[var(--border-darker)] text-[var(--text-primary)]`}>Reject</button>
+                      <button
+                        onClick={() => decide(t, 'approve')}
+                        className="rounded bg-emerald-600 hover:bg-emerald-500 py-1 text-xs font-semibold text-white"
+                      >
+                        Approve
+                      </button>
+                      <button
+                        onClick={() => decide(t, 'reject')}
+                        className="rounded border border-slate-700 hover:bg-slate-800 py-1 text-xs text-slate-300"
+                      >
+                        Reject
+                      </button>
                     </div>
                   </div>
                 ))}
               </div>
             )}
 
-            <div className={card}>
-              <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-1">History</h3>
-              <ul className="divide-y divide-[var(--border-darker)]">
+            {/* History */}
+            <div className="rounded-lg border border-slate-800 bg-slate-950 p-3">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Ledger History</h3>
+              <ul className="divide-y divide-slate-800">
                 {data.tx.map(t => (
-                  <li key={t.id} className="flex items-center justify-between gap-3 py-2.5 text-sm">
-                    <span className="min-w-0"><span className="block text-[var(--text-primary)]">{kindLabel(t)}</span><span className="block truncate text-xs text-[var(--text-muted)]">{t.note || t.ref} · {when(t.created_at)}</span></span>
-                    <span className="flex flex-col items-end gap-1 shrink-0"><span className="font-semibold text-[var(--text-primary)]">{t.kind === 'deposit' ? '+' : '−'}{money(t.amount)}</span><Badge s={t.status} /></span>
+                  <li key={t.id} className="flex items-center justify-between gap-3 py-2 text-xs">
+                    <span className="min-w-0">
+                      <span className="block text-slate-200 font-medium">{kindLabel(t)}</span>
+                      <span className="block truncate text-[11px] text-slate-500">{t.note || t.ref} · {when(t.created_at)}</span>
+                    </span>
+                    <span className="flex flex-col items-end gap-0.5 shrink-0">
+                      <span className="font-semibold font-mono text-slate-200">
+                        {t.kind === 'deposit' ? '+' : '−'}{money(t.amount)}
+                      </span>
+                      <Badge s={t.status} />
+                    </span>
                   </li>
                 ))}
-                {data.tx.length === 0 && <li className="py-2 text-sm text-[var(--text-muted)]">No activity yet.</li>}
+                {data.tx.length === 0 && <li className="py-2 text-xs text-slate-500">No activity yet.</li>}
               </ul>
             </div>
 
-            <button onClick={reset} className={`${btn} w-full flex items-center justify-center gap-2 border border-[var(--border-darker)] text-[var(--text-secondary)]`}><KeyRound className="w-4 h-4" />Reset password</button>
+            <button
+              onClick={reset}
+              className="w-full rounded border border-slate-800 hover:bg-slate-800/60 py-2 text-xs font-semibold text-slate-400 hover:text-slate-200 flex items-center justify-center gap-1.5 transition-colors"
+            >
+              <KeyRound className="w-3.5 h-3.5" />
+              <span>Issue Temporary Password</span>
+            </button>
           </>
         )}
       </aside>

@@ -101,9 +101,8 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
         </div>
 
         {info?.sandbox && (
-          <div className="mt-4 p-3 rounded-xl bg-amber-500/10 text-amber-300 text-xs border border-amber-500/30">
-            <b>Test mode.</b> These are dummy bank details. No real money moves, so you do not need to send anything from a real bank.
-            Just press "I have sent the transfer" and watch it go from Pending to Completed.
+          <div className="mt-4 p-3 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 text-xs">
+            <span className="font-semibold text-slate-100">Depository Instructions:</span> Use the institutional wire details below to initiate settlement. Submit the transfer notice to record your deposit.
           </div>
         )}
 

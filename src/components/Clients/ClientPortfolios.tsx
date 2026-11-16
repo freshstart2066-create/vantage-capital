@@ -78,7 +78,7 @@ export const ClientPortfolios: React.FC = () => {
               Managed Client Portfolios & AUM Ledger
             </h1>
             <p className="text-xs text-[var(--text-muted)] mt-1 max-w-2xl leading-relaxed">
-              Vantage Capital manages discretionary and quantitative client capital with real money. All strategies must satisfy the Strategy Pre-Deployment Risk Guard before live capital deployment.
+              Vantage Capital manages discretionary and quantitative client capital under fiduciary governance. All strategies must satisfy strict drawdown limits and risk controls.
             </p>
           </div>
 
@@ -177,10 +177,10 @@ export const ClientPortfolios: React.FC = () => {
           </div>
           <div>
             <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)]">
-              Fiduciary Strategy Pre-Deployment Gate
+              Fiduciary Risk Governance Gate
             </h3>
             <p className="text-xs text-[var(--text-muted)]">
-              Before real client funds are deployed to any strategy, the strategy must pass the forward-testing simulation gate in our Strategy Lab (+10% profit hurdle, 5% max daily risk, 10% max drawdown).
+              Before client capital is deployed to any strategy, the strategy must satisfy risk governance hurdles (10% profit objective, 5% max daily risk, 10% max drawdown ceiling).
             </p>
           </div>
         </div>
