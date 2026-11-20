@@ -3,7 +3,7 @@ services:
     name: vantage-capital
     runtime: node
     buildCommand: npm install && npm run build
-    startCommand: node server/index.js
+    startCommand: node --experimental-sqlite server/index.js
     envVars:
       - key: NODE_VERSION
         value: 22.13.0
