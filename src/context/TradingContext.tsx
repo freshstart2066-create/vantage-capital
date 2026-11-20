@@ -435,25 +435,7 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const saved = localStorage.getItem(STORAGE_KEYS.WITHDRAWALS);
       if (saved) return JSON.parse(saved);
     } catch {}
-    return [
-      {
-        id: 'wd_initial_1',
-        referenceId: 'TRANSFER-784102',
-        amount: 2500,
-        fee: 0,
-        netAmount: 2500,
-        beneficiaryName: 'Alex Vance',
-        bankName: 'JPMorgan Chase Bank, N.A.',
-        routingNumber: '021000021',
-        accountNumberMasked: '•••• 8912',
-        accountType: 'CHECKING',
-        beneficiaryAddress: '383 Madison Ave, New York, NY 10017',
-        wireMemo: 'Capital Performance Payout',
-        timestamp: Date.now() - 3 * 24 * 3600 * 1000,
-        status: 'SETTLED',
-        estimatedArrival: 'Settled via Bank transfer',
-      },
-    ];
+    return [];
   });
 
   // Incoming Wire Deposit State
@@ -462,20 +444,7 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const saved = localStorage.getItem(STORAGE_KEYS.DEPOSITS);
       if (saved) return JSON.parse(saved);
     } catch {}
-    return [
-      {
-        id: 'dep_initial_1',
-        referenceId: 'DEP-VC-89421',
-        amount: 50000,
-        originatorName: 'Alex Vance',
-        originatingBankName: 'JPMorgan Chase Bank, N.A.',
-        originatingRoutingNumber: '021000021',
-        imadOmad: '20241115MMQFMPBJ000091',
-        wireMemo: 'Initial Capital Deposit',
-        timestamp: Date.now() - 14 * 24 * 3600 * 1000,
-        status: 'SETTLED',
-      },
-    ];
+    return [];
   });
 
   // Managed Clients (AUM) State

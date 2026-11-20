@@ -18,7 +18,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
   const [info, setInfo] = useState<DepositInfo | null>(null);
   const [loadErr, setLoadErr] = useState('');
   const [copied, setCopied] = useState('');
-  const [amount, setAmount] = useState('5000');
+  const [amount, setAmount] = useState('');
   const [senderBank, setSenderBank] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');

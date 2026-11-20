@@ -42,21 +42,21 @@ export const ProfilePage: React.FC = () => {
   const [strategyFocus, setStrategyFocus] = useState<string>(user?.strategyFocus || 'Price Action & Breakouts');
   const [deskLocation, setDeskLocation] = useState<string>(user?.deskLocation || 'New York Dealing Desk (NY4)');
 
-  // Saved Wire Transfer Payout Info State
+  // Saved Wire Transfer Payout Info State (Blank by default - user inputs at their choice)
   const [savedBankName, setSavedBankName] = useState<string>(
-    user?.savedBankName || 'JPMorgan Chase Bank, N.A.'
+    user?.savedBankName || ''
   );
   const [savedRoutingNumber, setSavedRoutingNumber] = useState<string>(
     user?.savedRoutingNumber || ''
   );
   const [savedAccountNumber, setSavedAccountNumber] = useState<string>(
-    user?.savedAccountNumberMasked || '•••• 8912'
+    user?.savedAccountNumberMasked || ''
   );
   const [savedAccountType, setSavedAccountType] = useState<'CHECKING' | 'SAVINGS'>(
     user?.savedAccountType || 'CHECKING'
   );
   const [savedAddress, setSavedAddress] = useState<string>(
-    user?.savedAddress || '383 Madison Ave, New York, NY 10017'
+    user?.savedAddress || ''
   );
 
   // Password Change State
@@ -418,6 +418,7 @@ export const ProfilePage: React.FC = () => {
                 </label>
                 <input
                   type="text"
+                  placeholder="Enter receiving bank name"
                   value={savedBankName}
                   onChange={e => setSavedBankName(e.target.value)}
                   className="neo-input text-xs py-2.5 font-sans"
@@ -432,6 +433,7 @@ export const ProfilePage: React.FC = () => {
                   type="text"
                   maxLength={9}
                   inputMode="numeric"
+                  placeholder="9 digits (e.g. 110000000)"
                   value={savedRoutingNumber}
                   onChange={e => setSavedRoutingNumber(e.target.value.replace(/\D/g, ''))}
                   className="neo-input text-xs py-2.5 font-mono"
@@ -446,6 +448,7 @@ export const ProfilePage: React.FC = () => {
                   type="text"
                   maxLength={17}
                   inputMode="numeric"
+                  placeholder="Enter bank account number"
                   value={savedAccountNumber}
                   onChange={e => setSavedAccountNumber(e.target.value)}
                   className="neo-input text-xs py-2.5 font-mono"
@@ -472,6 +475,7 @@ export const ProfilePage: React.FC = () => {
                 </label>
                 <input
                   type="text"
+                  placeholder="Street address, city, state, zip"
                   value={savedAddress}
                   onChange={e => setSavedAddress(e.target.value)}
                   className="neo-input text-xs py-2.5 font-sans"

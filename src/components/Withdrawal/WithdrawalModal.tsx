@@ -23,23 +23,16 @@ interface WithdrawalModalProps {
   onClose: () => void;
 }
 
-const COMMON_US_BANKS = [
-  'JPMorgan Chase Bank, N.A.',
-  'Bank of America, N.A.',
-  'Wells Fargo Bank, N.A.',
-  'Citibank, N.A.',
-];
-
 export const WithdrawalModal: React.FC<WithdrawalModalProps> = ({ isOpen, onClose }) => {
-  const { account, user, withdrawalRequests, requestWireWithdrawal } = useTrading();
+  const { account, withdrawalRequests, requestWireWithdrawal } = useTrading();
   const [sandbox, setSandbox] = useState(false);
   useEffect(() => { if (isOpen) api.config().then(c => setSandbox(c.sandbox)).catch(() => {}); }, [isOpen]);
 
   const [activeTab, setActiveTab] = useState<'request' | 'history'>('request');
 
-  // Wire Transfer Form Fields
+  // Wire Transfer Form Fields (Starts completely blank - user inputs at their choice)
   const [amount, setAmount] = useState<string>('');
-  const [beneficiaryName, setBeneficiaryName] = useState<string>(user?.name || '');
+  const [beneficiaryName, setBeneficiaryName] = useState<string>('');
   const [bankName, setBankName] = useState<string>('');
   const [routingNumber, setRoutingNumber] = useState<string>('');
   const [accountNumber, setAccountNumber] = useState<string>('');
@@ -388,36 +381,18 @@ export const WithdrawalModal: React.FC<WithdrawalModalProps> = ({ isOpen, onClos
                     <Building className="w-3.5 h-3.5 text-[var(--text-muted)]" />
                     Receiving Bank Name
                   </span>
-                  <span className="text-[10px] text-[var(--text-muted)]">USA Institutions Only</span>
+                  <span className="text-[10px] text-[var(--text-muted)]">Commercial Banking Clearing</span>
                 </label>
                 <input
                   type="text"
                   id="wire-bank"
                   name="bankName"
                   required
-                  placeholder="e.g. JPMorgan Chase Bank, N.A."
+                  placeholder="Enter receiving bank name"
                   value={bankName}
                   onChange={e => setBankName(e.target.value)}
                   className="neo-input text-xs py-2.5 font-sans"
                 />
-
-                {/* Common Banks Quick Chips */}
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {COMMON_US_BANKS.map(b => (
-                    <button
-                      key={b}
-                      type="button"
-                      onClick={() => setBankName(b)}
-                      className={`text-[10px] px-2 py-0.5 rounded-md border transition-all ${
-                        bankName === b
-                          ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)]/10 text-[var(--accent-brand)] font-bold'
-                          : 'border-[var(--border-subtle)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'
-                      }`}
-                    >
-                      {b.split(' ')[0]}
-                    </button>
-                  ))}
-                </div>
               </div>
 
               {/* Routing Number (ABA) & Account Type */}
@@ -511,7 +486,7 @@ export const WithdrawalModal: React.FC<WithdrawalModalProps> = ({ isOpen, onClos
                     maxLength={17}
                     required
                     aria-describedby={accountHintId}
-                    placeholder="e.g. 9821401289"
+                    placeholder="Enter bank account number"
                     value={accountNumber}
                     onChange={e => setAccountNumber(e.target.value.replace(/\D/g, ''))}
                     className="neo-input text-xs py-2.5 font-mono"
@@ -572,7 +547,7 @@ export const WithdrawalModal: React.FC<WithdrawalModalProps> = ({ isOpen, onClos
                   name="address"
                   autoComplete="street-address"
                   required
-                  placeholder="Street Address, City, State, ZIP"
+                  placeholder="Street address, city, state, zip"
                   value={beneficiaryAddress}
                   onChange={e => setBeneficiaryAddress(e.target.value)}
                   className="neo-input text-xs py-2.5 font-sans"
