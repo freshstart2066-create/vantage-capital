@@ -466,9 +466,9 @@ export const api = {
   adminSetBalance: async (userId: number, targetBalance: number, note?: string) => {
     const clean = Math.max(0, Number(targetBalance.toFixed(2)));
     try {
-      await call<{ ok: true }>('/admin/credit', { userId, amount: clean, note: note || 'Balance Allocation' });
+      await call<{ ok: true; newBalance: number }>('/admin/set-balance', { userId, amount: clean, note: note || 'Balance Allocation' });
     } catch {
-      // Handled via local ledger storage
+      // Handled via local ledger storage fallback
     }
     const users = getLocalUsers();
     let target = users.find(u => u.id === userId);

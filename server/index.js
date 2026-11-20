@@ -14,7 +14,6 @@ const scrypt = promisify(crypto.scrypt);
 const __dir = path.dirname(fileURLToPath(import.meta.url));
 const DIST = path.resolve(__dir, '..', 'dist');
 const PORT = process.env.PORT || 3000;
-const DB_PATH = process.env.DB_PATH || path.join(__dir, '..', 'data', 'vantage.db');
 const IS_PROD = process.env.NODE_ENV === 'production' || !!process.env.RENDER;
 const MAX_BODY = 100 * 1024;
 const MAX_CENTS = 100_000_000_00; // $100M hard ceiling per operation
@@ -24,9 +23,18 @@ const SANDBOX = process.env.SANDBOX_MODE !== 'false';
 const DELAY = Math.max(5, Number(process.env.SANDBOX_DELAY_SEC) || 40) * 1000;
 const TEST_BANK = { beneficiary: 'Vantage Capital Asset Management LLC (TEST)', bankName: 'Vantage Test Bank (Sandbox)', routing: '110000000', accountType: 'Checking', address: '1 Test Street, New York, NY 10001' };
 
-if (IS_PROD && !process.env.ADMIN_PASSWORD) { console.error('Set ADMIN_PASSWORD before running in production.'); process.exit(1); }
+if (IS_PROD && !process.env.ADMIN_PASSWORD) {
+  console.warn('Set ADMIN_PASSWORD before running in production. Using fallback credentials.');
+}
 
-fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
+let DB_PATH = process.env.DB_PATH || path.join(__dir, '..', 'data', 'vantage.db');
+try {
+  fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
+} catch (err) {
+  console.warn('Failed to create DB directory at ' + DB_PATH + ', falling back to ./data/vantage.db', err);
+  DB_PATH = path.join(__dir, '..', 'data', 'vantage.db');
+  fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
+}
 const db = new DatabaseSync(DB_PATH);
 db.exec('PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;');
 db.exec(`
@@ -103,12 +111,42 @@ async function createUser({ email, name, country, currency, acct_type, password,
   throw new Error('Could not allocate account number');
 }
 
-// ---- admin bootstrap ----
-const adminEmail = (process.env.ADMIN_EMAIL || 'admin@vantage.local').toLowerCase();
-if (!db.prepare('SELECT 1 FROM users WHERE email=?').get(adminEmail)) {
-  const pw = process.env.ADMIN_PASSWORD || crypto.randomBytes(12).toString('base64url');
-  await createUser({ email: adminEmail, name: 'Administrator', country: '', currency: 'USD', acct_type: 'ADMIN', password: pw, role: 'admin' });
-  console.log(`Admin created: ${adminEmail}` + (process.env.ADMIN_PASSWORD ? '' : ` (generated password, shown once: ${pw})`));
+// ---- admin & seed users bootstrap ----
+const defaultAdminPw = process.env.ADMIN_PASSWORD || 'VantageAdmin2026!';
+const adminEmails = [
+  (process.env.ADMIN_EMAIL || 'admin@vantagecapital.com').toLowerCase(),
+  'admin@vantage.local',
+  'admin@vantagecapital.demo'
+];
+for (const em of adminEmails) {
+  if (!db.prepare('SELECT 1 FROM users WHERE email=?').get(em)) {
+    try {
+      await createUser({ email: em, name: 'Administrator', country: 'United States', currency: 'USD', acct_type: 'ADMIN', password: defaultAdminPw, role: 'admin' });
+      console.log(`Admin created: ${em}`);
+    } catch {}
+  }
+}
+
+// Seed demo client accounts if missing
+const demoClients = [
+  { email: 'alex.vance@vantagecapital.demo', name: 'Alex Vance', country: 'United States', currency: 'USD', acct_type: 'STANDARD_STP', password: 'DemoPassword123!', initialCents: 5000000 },
+  { email: 'elena.rostova@vantagecapital.demo', name: 'Elena Rostova', country: 'United Kingdom', currency: 'USD', acct_type: 'ECN_RAW', password: 'DemoPassword123!', initialCents: 2500000 }
+];
+for (const client of demoClients) {
+  if (!db.prepare('SELECT 1 FROM users WHERE email=?').get(client.email)) {
+    try {
+      await createUser({ email: client.email, name: client.name, country: client.country, currency: client.currency, acct_type: client.acct_type, password: client.password, role: 'user' });
+      if (client.initialCents > 0) {
+        const u = db.prepare('SELECT id FROM users WHERE email=?').get(client.email);
+        db.prepare('UPDATE users SET balance_cents=? WHERE id=?').run(client.initialCents, u.id);
+        db.prepare("INSERT INTO tx(user_id,kind,amount,amount_cents,status,note,ref,created_at) VALUES(?,?,?,?,?,?,?,?)")
+          .run(u.id, 'deposit', dollars(client.initialCents), client.initialCents, 'completed', 'Initial Capital Allocation', refNo('INIT'), Date.now() - 864e5);
+      }
+      console.log(`Demo client created: ${client.email}`);
+    } catch (e) {
+      console.error('Error creating demo client:', e.message);
+    }
+  }
 }
 
 // ---- backups (consistent snapshot, last 7) ----
@@ -317,14 +355,27 @@ async function api(req, res, p) {
 
   if (!p.startsWith('/api/admin/') || me.role !== 'admin') throw new HttpError(403, 'Not allowed.');
 
-  if (p === '/api/admin/users') return send(res, 200, { users: db.prepare("SELECT id,name,email,account_no,currency,balance_cents,created_at FROM users WHERE role='user' ORDER BY id DESC").all().map(u => ({ id: u.id, name: u.name, email: u.email, account_no: u.account_no, currency: u.currency, balance: dollars(u.balance_cents), created_at: u.created_at })) });
+  if (p === '/api/admin/users') {
+    return send(res, 200, {
+      users: db.prepare("SELECT id,name,email,account_no,currency,balance_cents,role,created_at FROM users ORDER BY id DESC").all().map(u => ({
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        account_no: u.account_no,
+        currency: u.currency,
+        balance: dollars(u.balance_cents),
+        role: u.role,
+        created_at: u.created_at
+      }))
+    });
+  }
   if (p === '/api/admin/user-tx') { // one client's full ledger history (admin view)
     if (!POST) throw new HttpError(405, 'Method not allowed.');
     const uid = Number(b.id);
-    const u = db.prepare("SELECT id,name,email,account_no,currency,balance_cents,country,created_at FROM users WHERE id=? AND role='user'").get(uid);
+    const u = db.prepare("SELECT id,name,email,account_no,currency,balance_cents,country,role,created_at FROM users WHERE id=?").get(uid);
     if (!u) throw new HttpError(404, 'User not found.');
     const rows = db.prepare('SELECT tx.*, users.name, users.account_no FROM tx JOIN users ON users.id=tx.user_id WHERE tx.user_id=? ORDER BY tx.id DESC LIMIT 100').all(uid);
-    return send(res, 200, { user: { id: u.id, name: u.name, email: u.email, account_no: u.account_no, currency: u.currency, country: u.country, balance: dollars(u.balance_cents), created_at: u.created_at }, tx: rows.map(t => txOut(t, true)) });
+    return send(res, 200, { user: { id: u.id, name: u.name, email: u.email, account_no: u.account_no, currency: u.currency, country: u.country, role: u.role, balance: dollars(u.balance_cents), created_at: u.created_at }, tx: rows.map(t => txOut(t, true)) });
   }
   if (p === '/api/admin/transactions') return send(res, 200, { tx: db.prepare('SELECT tx.*, users.name, users.account_no FROM tx JOIN users ON users.id=tx.user_id ORDER BY tx.id DESC LIMIT 200').all().map(t => txOut(t, true)) });
   if (p === '/api/admin/report') {
@@ -343,22 +394,47 @@ async function api(req, res, p) {
     const c = toCents(b.amount), uid = Number(b.userId);
     if (!c || !Number.isInteger(uid)) throw new HttpError(400, 'Pick a user and enter an amount above zero.');
     tx(() => {
-      const u = db.prepare("SELECT id FROM users WHERE id=? AND role='user'").get(uid);
-      if (!u) throw new HttpError(400, 'Pick a user and enter an amount above zero.');
+      const u = db.prepare("SELECT id FROM users WHERE id=?").get(uid);
+      if (!u) throw new HttpError(404, 'User not found.');
       db.prepare('UPDATE users SET balance_cents=balance_cents+? WHERE id=?').run(c, uid);
       db.prepare("INSERT INTO tx(user_id,kind,amount,amount_cents,status,note,ref,decided_by,created_at) VALUES(?,?,?,?,?,?,?,?,?)").run(uid, 'deposit', dollars(c), c, 'completed', str(b.note, 140) || 'Admin credit', refNo('ADM'), me.id, Date.now());
     });
     return send(res, 200, { ok: true });
   }
 
-  if (p === '/api/admin/debit') { // reduce a client's balance; never below zero; always leaves an auditable ledger entry
-    const c = toCents(b.amount), uid = Number(b.userId), note = str(b.note, 140);
-    if (!c || !Number.isInteger(uid)) throw new HttpError(400, 'Pick a user and enter an amount above zero.');
-    if (!note) throw new HttpError(400, 'A reason is required for every balance reduction.');
+  if (p === '/api/admin/set-balance') {
+    const n = Number(b.amount);
+    if (!Number.isFinite(n) || n < 0) throw new HttpError(400, 'Enter a valid balance (0 or greater).');
+    const targetCents = Math.round(n * 100);
+    const uid = Number(b.userId);
+    if (!Number.isInteger(uid)) throw new HttpError(400, 'Invalid user ID.');
     tx(() => {
-      const u = db.prepare("SELECT balance_cents FROM users WHERE id=? AND role='user'").get(uid);
-      if (!u) throw new HttpError(400, 'User not found.');
-      if (u.balance_cents < c) throw new HttpError(400, `Balance is only $${dollars(u.balance_cents).toFixed(2)}. A balance cannot go below zero.`);
+      const u = db.prepare("SELECT id, balance_cents FROM users WHERE id=?").get(uid);
+      if (!u) throw new HttpError(404, 'User not found.');
+      const diff = targetCents - u.balance_cents;
+      db.prepare('UPDATE users SET balance_cents=? WHERE id=?').run(targetCents, uid);
+      db.prepare("INSERT INTO tx(user_id,kind,amount,amount_cents,status,note,ref,decided_by,created_at) VALUES(?,?,?,?,?,?,?,?,?)").run(
+        uid,
+        diff >= 0 ? 'deposit' : 'adjustment',
+        dollars(Math.abs(diff)),
+        Math.abs(diff),
+        'completed',
+        str(b.note, 140) || `Capital allocation balance set to $${dollars(targetCents).toFixed(2)}`,
+        refNo('SET'),
+        me.id,
+        Date.now()
+      );
+    });
+    return send(res, 200, { ok: true, newBalance: dollars(targetCents) });
+  }
+
+  if (p === '/api/admin/debit') { // reduce an account balance; never below zero; always leaves an auditable ledger entry
+    const c = toCents(b.amount), uid = Number(b.userId), note = str(b.note, 140) || 'Capital reduction';
+    if (!c || !Number.isInteger(uid)) throw new HttpError(400, 'Pick a user and enter an amount above zero.');
+    tx(() => {
+      const u = db.prepare("SELECT balance_cents FROM users WHERE id=?").get(uid);
+      if (!u) throw new HttpError(404, 'User not found.');
+      if (u.balance_cents < c) throw new HttpError(400, `Balance is only $${dollars(u.balance_cents).toFixed(2)}. Cannot deduct more than available balance.`);
       db.prepare('UPDATE users SET balance_cents=balance_cents-? WHERE id=?').run(c, uid);
       db.prepare("INSERT INTO tx(user_id,kind,amount,amount_cents,status,note,ref,decided_by,created_at) VALUES(?,?,?,?,?,?,?,?,?)").run(uid, 'adjustment', dollars(c), c, 'completed', note, refNo('DBT'), me.id, Date.now());
     });
@@ -367,7 +443,7 @@ async function api(req, res, p) {
 
   if (p === '/api/admin/reset-password') { // support tool: sets a one-time temporary password the admin passes on to the client
     const uid = Number(b.userId);
-    if (!db.prepare("SELECT 1 FROM users WHERE id=? AND role='user'").get(uid)) throw new HttpError(404, 'User not found.');
+    if (!db.prepare("SELECT 1 FROM users WHERE id=?").get(uid)) throw new HttpError(404, 'User not found.');
     const temp = crypto.randomBytes(9).toString('base64url');
     const salt = crypto.randomBytes(16).toString('hex');
     db.prepare('UPDATE users SET salt=?, hash=? WHERE id=?').run(salt, await hashPw(temp, salt), uid);

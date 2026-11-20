@@ -2,6 +2,7 @@ services:
   - type: web
     name: vantage-capital
     runtime: node
+    plan: free
     buildCommand: npm install && npm run build
     startCommand: node --experimental-sqlite server/index.js
     envVars:
@@ -17,9 +18,3 @@ services:
         generateValue: true
       - key: SANDBOX_MODE
         value: "true"
-      - key: DB_PATH
-        value: /var/data/vantage.db
-    disk:
-      name: vantage-data
-      mountPath: /var/data
-      sizeGB: 1
