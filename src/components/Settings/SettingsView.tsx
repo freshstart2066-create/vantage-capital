@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTrading } from '../../context/TradingContext';
-import { Settings, Moon, Sun, Monitor, Volume2, VolumeX, Shuffle, RotateCcw, Plus, Check } from 'lucide-react';
+import { Settings, Moon, Sun, Monitor, Volume2, VolumeX, Shuffle, Plus } from 'lucide-react';
 
 export const SettingsView: React.FC = () => {
   const {
@@ -10,27 +10,18 @@ export const SettingsView: React.FC = () => {
     toggleSound,
     slippageEnabled,
     toggleSlippage,
-    account,
-    resetAccount,
     strategyTags,
     addStrategyTag,
     liveFeedConnected,
   } = useTrading();
 
   const [newTag, setNewTag] = useState<string>('');
-  const [resetSuccess, setResetSuccess] = useState<boolean>(false);
 
   const handleAddTag = () => {
     if (newTag.trim()) {
       addStrategyTag(newTag.trim());
       setNewTag('');
     }
-  };
-
-  const handleResetCapital = (amt: number) => {
-    resetAccount(amt);
-    setResetSuccess(true);
-    setTimeout(() => setResetSuccess(false), 2500);
   };
 
   return (
@@ -144,37 +135,7 @@ export const SettingsView: React.FC = () => {
         </div>
       </div>
 
-      {/* 3. Capital Deposit Management */}
-      <div className="neo-box p-6 space-y-3">
-        <div>
-          <h2 className="text-sm font-bold text-[var(--text-primary)]">Adjust Account Deposit Capital</h2>
-          <p className="text-xs text-[var(--text-muted)] mt-0.5">
-            Reset or scale your initial deposit allocation. Current balance: <strong className="font-mono text-[var(--text-primary)]">${account.balance.toLocaleString()}</strong>
-          </p>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
-          {[10000, 50000, 100000, 250000].map(amt => (
-            <button
-              key={amt}
-              onClick={() => handleResetCapital(amt)}
-              className="neo-btn py-2 text-xs font-mono font-bold flex items-center justify-center gap-1.5"
-            >
-              <RotateCcw className="w-3 h-3 text-[var(--text-muted)]" />
-              <span>${(amt / 1000).toFixed(0)}k</span>
-            </button>
-          ))}
-        </div>
-
-        {resetSuccess && (
-          <div className="p-2 text-xs text-[var(--accent-long)] font-semibold flex items-center gap-1.5 animate-fadeIn">
-            <Check className="w-4 h-4" />
-            <span>Account successfully reset to selected capital!</span>
-          </div>
-        )}
-      </div>
-
-      {/* 4. Strategy Method Tags Management */}
+      {/* 3. Strategy Method Tags Management */}
       <div className="neo-box p-6 space-y-3">
         <div>
           <h2 className="text-sm font-bold text-[var(--text-primary)]">Method Setup Tags</h2>

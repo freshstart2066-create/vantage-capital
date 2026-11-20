@@ -517,31 +517,83 @@ export const AdminDashboard: React.FC = () => {
 
           {/* Quick Roster Table */}
           <section className={cardCls}>
-            <h2 className="text-base font-bold text-slate-100 mb-3">
-              Allocated Client Accounts
-            </h2>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+              <div>
+                <h2 className="text-base font-bold text-slate-100">
+                  Signed-Up Users & Capital Allocation Directory
+                </h2>
+                <p className="text-xs text-slate-400">
+                  Select any signed-up client below to immediately allocate funds or inspect their balance ledger.
+                </p>
+              </div>
+              <span className="text-xs font-mono text-slate-400 bg-slate-800/60 px-2.5 py-1 rounded w-fit">
+                Total Users: {users.length}
+              </span>
+            </div>
+
             <div className="overflow-x-auto">
               <table className="w-full text-sm text-left text-slate-300">
                 <thead className="text-xs uppercase text-slate-500 border-b border-slate-800">
                   <tr>
-                    <th className="py-2.5 font-medium">Client Name</th>
-                    <th className="py-2.5 font-medium">Email</th>
+                    <th className="py-2.5 font-medium">User / Client</th>
                     <th className="py-2.5 font-medium">Account ID</th>
+                    <th className="py-2.5 font-medium">Role</th>
                     <th className="py-2.5 font-medium text-right">Available Capital</th>
+                    <th className="py-2.5 font-medium text-right pr-2">Allocation Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800">
-                  {users.map(u => (
-                    <tr key={u.id} className="hover:bg-slate-800/30">
-                      <td className="py-2.5 font-semibold text-slate-100">{u.name}</td>
-                      <td className="py-2.5 text-slate-400">{u.email}</td>
-                      <td className="py-2.5 font-mono text-slate-400">{u.account_no}</td>
-                      <td className="py-2.5 font-mono font-bold text-slate-100 text-right">{money(u.balance)}</td>
-                    </tr>
-                  ))}
+                  {users.map(u => {
+                    const isSelected = allocTargetId === String(u.id);
+                    return (
+                      <tr key={u.id} className={`hover:bg-slate-800/40 transition-colors ${isSelected ? 'bg-sky-500/10' : ''}`}>
+                        <td className="py-2.5">
+                          <div className="font-semibold text-slate-100">{u.name}</div>
+                          <div className="text-xs text-slate-400 font-mono">{u.email}</div>
+                        </td>
+                        <td className="py-2.5 font-mono text-slate-400 text-xs">{u.account_no}</td>
+                        <td className="py-2.5">
+                          <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded ${u.role === 'admin' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30' : 'bg-slate-800 text-slate-300'}`}>
+                            {u.role === 'admin' ? 'ADMIN' : 'CLIENT'}
+                          </span>
+                        </td>
+                        <td className="py-2.5 font-mono font-bold text-slate-100 text-right">
+                          {money(u.balance)}
+                        </td>
+                        <td className="py-2.5 text-right pr-2">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setAllocTargetId(String(u.id));
+                                setAllocMode('set');
+                                const form = document.querySelector('form');
+                                form?.scrollIntoView({ behavior: 'smooth' });
+                              }}
+                              className="px-2.5 py-1 text-xs font-semibold rounded bg-sky-600/20 text-sky-400 hover:bg-sky-600 hover:text-white border border-sky-500/30 transition-colors flex items-center gap-1"
+                              title="Set balance for this user"
+                            >
+                              <DollarSign className="w-3 h-3" />
+                              <span>Allocate</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setOpenId(u.id)}
+                              className="px-2 py-1 text-xs rounded border border-slate-700 text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
+                              title="View Ledger & Audit"
+                            >
+                              Ledger
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                   {users.length === 0 && (
                     <tr>
-                      <td colSpan={4} className="py-4 text-center text-slate-500">No client accounts found.</td>
+                      <td colSpan={5} className="py-6 text-center text-slate-500">
+                        No signed-up users found.
+                      </td>
                     </tr>
                   )}
                 </tbody>
@@ -628,20 +680,44 @@ export const AdminDashboard: React.FC = () => {
 
           <ul className="divide-y divide-slate-800">
             {filtered.map(u => (
-              <li key={u.id}>
-                <button
-                  onClick={() => setOpenId(u.id)}
-                  className="w-full flex items-center justify-between gap-3 py-3 text-left hover:bg-slate-800/30 px-2 rounded transition-colors"
-                >
-                  <span className="min-w-0">
-                    <span className="block truncate font-semibold text-sm text-slate-100">{u.name}</span>
-                    <span className="block truncate text-xs text-slate-400 font-mono">{u.email} · {u.account_no}</span>
-                  </span>
-                  <span className="flex items-center gap-2 shrink-0">
+              <li key={u.id} className="py-3 px-2 flex items-center justify-between gap-3 hover:bg-slate-800/30 rounded transition-colors">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-sm text-slate-100">{u.name}</span>
+                    <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${u.role === 'admin' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30' : 'bg-slate-800 text-slate-400'}`}>
+                      {u.role === 'admin' ? 'ADMIN' : 'CLIENT'}
+                    </span>
+                  </div>
+                  <span className="block truncate text-xs text-slate-400 font-mono mt-0.5">{u.email} · {u.account_no}</span>
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  <div className="text-right">
+                    <span className="text-[10px] text-slate-500 block uppercase tracking-wider">Available Capital</span>
                     <span className="font-bold text-sm font-mono text-slate-100">{money(u.balance)}</span>
-                    <ChevronRight className="w-4 h-4 text-slate-500" />
-                  </span>
-                </button>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTab('allocation');
+                      setAllocTargetId(String(u.id));
+                      setAllocMode('set');
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className="px-2.5 py-1 text-xs font-semibold rounded bg-sky-600/20 text-sky-400 hover:bg-sky-600 hover:text-white border border-sky-500/30 transition-colors flex items-center gap-1"
+                    title="Allocate capital to this user"
+                  >
+                    <DollarSign className="w-3 h-3" />
+                    <span>Allocate</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setOpenId(u.id)}
+                    className="p-1.5 text-slate-400 hover:text-slate-200 rounded hover:bg-slate-800"
+                    title="View Account Details & Ledger"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
               </li>
             ))}
             {filtered.length === 0 && (

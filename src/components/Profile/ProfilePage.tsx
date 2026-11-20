@@ -25,7 +25,6 @@ export const ProfilePage: React.FC = () => {
     setActiveTab,
     signOut,
     updateUserProfile,
-    setPropTier,
     withdrawalRequests,
     soundEnabled,
     toggleSound,
@@ -351,39 +350,20 @@ export const ProfilePage: React.FC = () => {
             </div>
           </div>
 
-          {/* Tier Upgrade Selector */}
+          {/* Assigned Allocation Mandate Status (Read-Only) */}
           <div className="p-5 neo-inset rounded-2xl space-y-3">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)]">
-              Switch Portfolio Allocation Mandate
-            </h3>
-            <p className="text-xs text-[var(--text-muted)]">
-              Select an institutional portfolio tier to forward-test strategy scalability across different client capital weights.
-            </p>
-
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
-              {[
-                { label: '$10,000', amount: 10000, name: 'Private Wealth ($10,000)' },
-                { label: '$50,000', amount: 50000, name: 'Accredited Portfolio ($50,000)' },
-                { label: '$100,000', amount: 100000, name: 'Institutional Prime ($100,000)' },
-                { label: '$250,000', amount: 250000, name: 'Deposit $250,000' },
-              ].map(t => (
-                <button
-                  key={t.amount}
-                  type="button"
-                  onClick={() => {
-                    setPropTier(t.amount);
-                    updateUserProfile({ tier: t.name });
-                  }}
-                  className={`p-3 rounded-xl border text-center transition-all ${
-                    user?.tier.includes(t.label)
-                      ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)] text-white shadow-md font-bold'
-                      : 'border-[var(--border-subtle)] neo-btn text-[var(--text-muted)] hover:text-[var(--text-primary)]'
-                  }`}
-                >
-                  <div className="text-sm font-mono font-bold">{t.label}</div>
-                  <div className="text-[10px] opacity-80 mt-0.5">Allocation</div>
-                </button>
-              ))}
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)]">
+                  Assigned Portfolio Allocation Mandate
+                </h3>
+                <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                  Capital allocations are authorized and managed strictly by Firm Administration via the Treasury Console.
+                </p>
+              </div>
+              <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-sky-500/10 text-sky-400 border border-sky-500/20">
+                {user?.tier || 'Institutional Prime'}
+              </span>
             </div>
           </div>
         </div>

@@ -60,6 +60,7 @@ export interface AdminUser {
   account_no: string;
   currency: string;
   balance: number;
+  role?: string;
   created_at: number;
 }
 
