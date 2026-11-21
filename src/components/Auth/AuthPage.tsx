@@ -78,17 +78,18 @@ export const AuthPage: React.FC = () => {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim() || !email.includes('@')) return setError('Enter the email address you registered with.');
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail || !cleanEmail.includes('@')) return setError('Enter the email address you registered with.');
     if (!password) return setError('Enter your password.');
     setError('');
     setBusy(true);
     try {
-      const u = await api.login(email.trim(), password);
-      signIn(u.email, u.name);
+      const u = await api.login(cleanEmail, password);
+      signIn(u.email, u.name, undefined, u.role, u.accountId);
       updateUserProfile({ role: u.role, accountId: u.accountId, name: u.name });
       if (u.role === 'admin') setActiveTab('admin');
     } catch (err) {
-      setError((err as Error).message);
+      setError((err as Error).message || 'Failed to sign in. Please check your credentials.');
     } finally {
       setBusy(false);
     }
@@ -96,18 +97,19 @@ export const AuthPage: React.FC = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    const cleanEmail = email.trim().toLowerCase();
     if (!fullName.trim()) return setError('Enter your full name.');
-    if (!email.trim() || !email.includes('@')) return setError('Enter a valid email address.');
+    if (!cleanEmail || !cleanEmail.includes('@')) return setError('Enter a valid email address.');
     if (!rules.every(r => r.ok)) return setError('Your password must meet all three requirements below.');
     if (!agree) return setError('Accept the terms and risk disclosure to continue.');
     setError('');
     setBusy(true);
     try {
-      const u = await api.signup({ name: fullName.trim(), email: email.trim(), password, country, currency, accountType });
-      signUp(u.name, u.email, 'Standard', undefined, accountType, currency);
+      const u = await api.signup({ name: fullName.trim(), email: cleanEmail, password, country, currency, accountType });
+      signUp(u.name, u.email, 'Standard', undefined, accountType, currency, u.accountId, u.role);
       updateUserProfile({ role: u.role, accountId: u.accountId });
     } catch (err) {
-      setError((err as Error).message);
+      setError((err as Error).message || 'Failed to create account.');
     } finally {
       setBusy(false);
     }

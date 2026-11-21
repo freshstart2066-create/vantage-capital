@@ -172,8 +172,12 @@ const hit = (key, limit, windowMs) => {
 };
 setInterval(() => { const now = Date.now(); for (const [k, v] of buckets) if (!v.some(t => now - t < 9e5)) buckets.delete(k); }, 6e5).unref();
 const clientIp = req => {
-  if (IS_PROD) { const x = String(req.headers['x-forwarded-for'] || '').split(',').map(s => s.trim()).filter(Boolean); if (x.length) return x[x.length - 1]; }
-  return req.socket.remoteAddress || '?';
+  const xff = req.headers['x-forwarded-for'];
+  if (xff) {
+    const list = String(xff).split(',').map(s => s.trim()).filter(Boolean);
+    if (list.length > 0) return list[0];
+  }
+  return req.headers['x-real-ip'] || req.socket.remoteAddress || '127.0.0.1';
 };
 
 // ---- sandbox settlement: pending -> processing -> completed (idempotent; credits a deposit exactly once) ----
@@ -251,9 +255,9 @@ async function api(req, res, p) {
   const b = POST ? await readBody(req) : {};
   const ip = clientIp(req);
 
-  if (p === '/api/signup') {
+  if (p === '/api/signup' || p === '/api/register') {
     if (!POST) throw new HttpError(405, 'Method not allowed.');
-    if (!hit('signup|' + ip, 5, 36e5)) throw new HttpError(429, 'Too many sign-ups from this address. Try later.');
+    if (!hit('signup|' + ip, 60, 36e5)) throw new HttpError(429, 'Too many sign-up attempts. Try later.');
     const email = str(b.email, 254).toLowerCase(), name = str(b.name, 100), password = typeof b.password === 'string' ? b.password : '';
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || !name || password.length < 8 || password.length > 200) throw new HttpError(400, 'Check your name, email and password (8+ characters).');
     if (db.prepare('SELECT 1 FROM users WHERE email=?').get(email)) throw new HttpError(409, 'An account with this email already exists.');
@@ -266,7 +270,7 @@ async function api(req, res, p) {
   if (p === '/api/login') {
     if (!POST) throw new HttpError(405, 'Method not allowed.');
     const email = str(b.email, 254).toLowerCase(), key = 'login|' + email + '|' + ip;
-    if (!hit('loginip|' + ip, 30, 9e5) || (buckets.get(key) || []).filter(t => Date.now() - t < 9e5).length >= 5) throw new HttpError(429, 'Too many attempts. Try again in 15 minutes.');
+    if (!hit('loginip|' + ip, 120, 9e5) || (buckets.get(key) || []).filter(t => Date.now() - t < 9e5).length >= 15) throw new HttpError(429, 'Too many failed login attempts. Try again in 15 minutes.');
     const u = db.prepare('SELECT * FROM users WHERE email=?').get(email);
     const ok = u ? safeEq(await hashPw(typeof b.password === 'string' ? b.password : '', u.salt), u.hash) : (await hashPw('x', 'y'), false);
     if (!ok) { hit(key, 99, 9e5); throw new HttpError(401, 'Incorrect email or password.'); }

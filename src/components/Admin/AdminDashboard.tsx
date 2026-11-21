@@ -93,8 +93,9 @@ export const AdminDashboard: React.FC = () => {
       if (u.role !== 'admin') {
         throw new Error('This account does not hold administrative access credentials.');
       }
-      signIn(u.email, u.name);
+      signIn(u.email, u.name, undefined, 'admin', u.accountId);
       updateUserProfile({ role: 'admin', accountId: u.accountId, name: u.name });
+      setActiveTab('admin');
     } catch (err: unknown) {
       setAuthError((err as Error).message);
     } finally {

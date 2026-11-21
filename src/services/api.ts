@@ -143,24 +143,33 @@ async function call<T>(path: string, body?: unknown): Promise<T> {
   }
 
   const contentType = res.headers.get('content-type') || '';
-  if (res.status === 404 || contentType.includes('text/html') || !res.ok) {
-    throw new ApiError(res.status, 'API_OFFLINE');
+  if (contentType.includes('text/html')) {
+    throw new ApiError(res.status || 404, 'API_OFFLINE');
   }
 
-  const text = await res.text();
-  if (!text || !text.trim()) {
-    throw new ApiError(res.status, 'API_OFFLINE');
-  }
-
-  let data: unknown;
+  let text = '';
   try {
-    data = JSON.parse(text);
+    text = await res.text();
   } catch {
-    throw new ApiError(res.status, 'API_OFFLINE');
+    throw new ApiError(res.status, 'Failed to read response from server.');
+  }
+
+  let data: any = {};
+  if (text && text.trim()) {
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = {};
+    }
+  }
+
+  if (!res.ok) {
+    const errorMsg = data?.error || data?.message || (res.status === 401 ? 'Incorrect email or password.' : `Request failed (${res.status})`);
+    throw new ApiError(res.status, errorMsg);
   }
 
   if (!data || typeof data !== 'object') {
-    throw new ApiError(res.status, 'API_OFFLINE');
+    throw new ApiError(res.status, 'Invalid response from server.');
   }
 
   return data as T;

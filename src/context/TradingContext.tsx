@@ -83,14 +83,16 @@ interface TradingContextType {
   propEvaluation: PropEvaluationState;
 
   // Actions
-  signIn: (email: string, name?: string, tier?: string) => void;
+  signIn: (email: string, name?: string, tier?: string, role?: 'user' | 'admin', accountId?: string) => void;
   signUp: (
     name: string,
     email: string,
     tier: string,
     strategyFocus?: string,
     accountType?: 'ECN_RAW' | 'STANDARD_STP',
-    baseCurrency?: 'USD' | 'EUR' | 'GBP'
+    baseCurrency?: 'USD' | 'EUR' | 'GBP',
+    accountId?: string,
+    role?: 'user' | 'admin'
   ) => void;
   signOut: () => void;
   updateUserProfile: (updates: Partial<UserProfile>) => void;
@@ -1587,15 +1589,17 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   // Sign In Action
-  const signIn = (email: string, name?: string, tier?: string) => {
-    const selectedTier = tier || 'Unfunded Mandate';
+  const signIn = (email: string, name?: string, tier?: string, role?: 'user' | 'admin', accountId?: string) => {
+    const selectedTier = tier || 'Institutional Client';
+    const computedRole = role || (email.toLowerCase().includes('admin') ? 'admin' : 'user');
     const newUser: UserProfile = {
       id: 'usr_' + Date.now(),
+      role: computedRole,
       name: name || email.split('@')[0],
-      email,
-      accountId: 'VC-' + Math.floor(10000 + Math.random() * 90000),
+      email: email.trim().toLowerCase(),
+      accountId: accountId || ('VC' + Math.floor(10000000 + Math.random() * 90000000)),
       tier: selectedTier,
-      accountType: 'ECN_RAW',
+      accountType: 'STANDARD_STP',
       baseCurrency: 'USD',
       twoFactorEnabled: true,
       joinedDate: Date.now(),
@@ -1605,7 +1609,11 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(newUser));
     } catch {}
     setToastMessage({ text: `Welcome back, ${newUser.name}! Session authenticated.`, type: 'success' });
-    setActiveTab('terminal');
+    if (computedRole === 'admin') {
+      setActiveTab('admin');
+    } else {
+      setActiveTab('terminal');
+    }
   };
 
   // Sign Up Action — new users start with $0.00 Active Capital!
@@ -1615,16 +1623,19 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     tier: string,
     strategyFocus?: string,
     accountType?: 'ECN_RAW' | 'STANDARD_STP',
-    baseCurrency?: 'USD' | 'EUR' | 'GBP'
+    baseCurrency?: 'USD' | 'EUR' | 'GBP',
+    accountId?: string,
+    role?: 'user' | 'admin'
   ) => {
     const newUser: UserProfile = {
       id: 'usr_' + Date.now(),
+      role: role || 'user',
       name,
-      email,
-      accountId: 'VC-' + Math.floor(10000 + Math.random() * 90000),
+      email: email.trim().toLowerCase(),
+      accountId: accountId || ('VC' + Math.floor(10000000 + Math.random() * 90000000)),
       tier,
       strategyFocus: strategyFocus || 'Custom Strategy',
-      accountType: accountType || 'ECN_RAW',
+      accountType: accountType || 'STANDARD_STP',
       baseCurrency: baseCurrency || 'USD',
       twoFactorEnabled: false,
       joinedDate: Date.now(),
@@ -1635,13 +1646,12 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     } catch {}
 
     // NEW SIGNUPS START AT $0.00 BALANCE!
-    // Balance is only updated when the firm owner allocates capital or an inbound wire clears.
     resetAccount(0);
     setToastMessage({
       text: `Account created for ${name}! Active Capital is $0.00 USD (Awaiting Capital Allocation / Wire Deposit).`,
       type: 'info',
     });
-    setActiveTab('profile');
+    setActiveTab('terminal');
   };
 
   // Sign Out Action
