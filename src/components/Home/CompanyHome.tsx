@@ -163,7 +163,7 @@ export const CompanyHome: React.FC = () => {
               }}
               className="neo-btn py-1.5 px-3 text-xs font-mono font-bold"
             >
-              Test EUR/USD
+              EUR/USD
             </button>
             <button
               onClick={() => {
@@ -172,7 +172,7 @@ export const CompanyHome: React.FC = () => {
               }}
               className="neo-btn py-1.5 px-3 text-xs font-mono font-bold"
             >
-              Test NVDA
+              NVDA
             </button>
             <button
               onClick={() => {
@@ -181,7 +181,7 @@ export const CompanyHome: React.FC = () => {
               }}
               className="neo-btn py-1.5 px-3 text-xs font-mono font-bold"
             >
-              Test Gold
+              Gold (XAU)
             </button>
           </div>
         </div>

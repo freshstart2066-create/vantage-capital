@@ -135,45 +135,45 @@ body {
   transition: background-color 0.15s ease, color 0.15s ease;
 }
 
-/* Institutional Flat Utility Classes (Replaces Neomorphism) */
+/* Institutional Modern Utility Classes (Clean, Flat, Refined Fintech) */
 @layer components {
 .neo-box {
   background-color: var(--bg-surface);
   border: 1px solid var(--border-subtle);
-  border-radius: 8px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
 }
 
 .neo-box-sm {
   background-color: var(--bg-surface);
   border: 1px solid var(--border-subtle);
-  border-radius: 6px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  border-radius: 8px;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
 }
 
 .neo-card {
   background-color: var(--bg-surface-card);
   border: 1px solid var(--border-subtle);
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  border-radius: 14px;
+  box-shadow: 0 4px 16px -4px rgba(0, 0, 0, 0.06);
 }
 
 .neo-inset {
   background-color: var(--bg-sunken);
-  border: 1px solid var(--border-darker);
-  border-radius: 6px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
 }
 
 .neo-inset-sm {
   background-color: var(--bg-sunken);
   border: 1px solid var(--border-subtle);
-  border-radius: 4px;
+  border-radius: 8px;
 }
 
 .neo-btn {
   background-color: var(--bg-surface);
-  border: 1px solid var(--border-darker);
-  border-radius: 6px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
   color: var(--text-primary);
   cursor: pointer;
   font-family: inherit;
@@ -183,24 +183,28 @@ body {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   user-select: none;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
 }
 
 .neo-btn:hover {
   background-color: var(--bg-sunken);
   border-color: var(--border-darker);
+  transform: translateY(-0.5px);
 }
 
 .neo-btn:active, .neo-btn.active {
   background-color: var(--bg-sunken);
   border-color: var(--accent-brand);
+  transform: translateY(0);
 }
 
 .neo-btn-primary {
   background-color: #0284c7;
   color: #ffffff;
   border: 1px solid #0369a1;
+  box-shadow: 0 1px 3px 0 rgba(2, 132, 199, 0.25);
 }
 
 .neo-btn-primary:hover {
@@ -216,6 +220,7 @@ body {
   background-color: #059669;
   color: #ffffff;
   border: 1px solid #047857;
+  box-shadow: 0 1px 3px 0 rgba(5, 150, 105, 0.25);
 }
 
 .neo-btn-buy:hover {
@@ -230,6 +235,7 @@ body {
   background-color: #dc2626;
   color: #ffffff;
   border: 1px solid #b91c1c;
+  box-shadow: 0 1px 3px 0 rgba(220, 38, 38, 0.25);
 }
 
 .neo-btn-sell:hover {
@@ -242,12 +248,12 @@ body {
 
 .neo-input {
   background-color: var(--bg-sunken);
-  border: 1px solid var(--border-darker);
-  border-radius: 6px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
   color: var(--text-primary);
   font-family: var(--font-mono);
   font-size: 13px;
-  padding: 7px 12px;
+  padding: 8px 12px;
   outline: none;
   transition: border-color 0.15s ease;
   width: 100%;

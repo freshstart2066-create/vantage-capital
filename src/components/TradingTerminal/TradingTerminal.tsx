@@ -27,7 +27,7 @@ export const TradingTerminal: React.FC = () => {
   } = useTrading();
 
   const [leftTab, setLeftTab] = useState<'watch' | 'strength'>('watch');
-  const [showPropWidget, setShowPropWidget] = useState<boolean>(true);
+  const [showPropWidget, setShowPropWidget] = useState<boolean>(false);
   const [isHotkeysOpen, setIsHotkeysOpen] = useState<boolean>(false);
 
   // Global Keyboard Shortcuts Listener
