@@ -97,10 +97,7 @@ export interface DepositInfo {
 const getLocalUsers = (): AdminUser[] => {
   try {
     const raw = localStorage.getItem(USERS_KEY);
-    return raw ? JSON.parse(raw) : [
-      { id: 101, name: 'Alex Vance', email: 'alex.vance@vantagecapital.demo', account_no: 'VC89421832', currency: 'USD', balance: 0, created_at: Date.now() - 864e5 },
-      { id: 102, name: 'Elena Rostova', email: 'elena.rostova@vantagecapital.demo', account_no: 'VC72393144', currency: 'USD', balance: 0, created_at: Date.now() - 432e5 },
-    ];
+    return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
   }
@@ -115,9 +112,7 @@ const saveLocalUsers = (users: AdminUser[]) => {
 const getLocalTx = (): Tx[] => {
   try {
     const raw = localStorage.getItem(TX_KEY);
-    return raw ? JSON.parse(raw) : [
-      { id: 1, kind: 'deposit', amount: 50000, status: 'completed', note: 'Initial Bank Wire Capital Allocation', ref: 'DEP-INIT-001', created_at: Date.now() - 3600000, name: 'Alex Vance', account_no: 'VC89421832' },
-    ];
+    return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
   }

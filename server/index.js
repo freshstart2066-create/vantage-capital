@@ -107,50 +107,19 @@ async function createUser({ email, name, country, currency, acct_type, password,
   throw new Error('Could not allocate account number');
 }
 
-// ---- admin & seed users bootstrap ----
+// ---- admin bootstrap ----
 const defaultAdminPw = process.env.ADMIN_PASSWORD || 'VantageAdmin2026!';
-const adminEmails = [
-  (process.env.ADMIN_EMAIL || 'admin@vantagecapital.com').toLowerCase(),
-  'admin@vantage.local',
-  'admin@vantagecapital.demo'
-];
-for (const em of adminEmails) {
-  const existing = await db.get('SELECT id FROM users WHERE email=?', em);
-  if (!existing) {
-    try {
-      await createUser({ email: em, name: 'Administrator', country: 'United States', currency: 'USD', acct_type: 'ADMIN', password: defaultAdminPw, role: 'admin' });
-      console.log(`Admin created: ${em}`);
-    } catch (e) {
-      console.error('Error creating admin:', e.message);
-    }
-  } else {
-    await db.run("UPDATE users SET role='admin' WHERE id=?", existing.id);
+const adminEmail = (process.env.ADMIN_EMAIL || 'admin@vantagecapital.com').toLowerCase();
+const existingAdmin = await db.get('SELECT id FROM users WHERE email=?', adminEmail);
+if (!existingAdmin) {
+  try {
+    await createUser({ email: adminEmail, name: 'Administrator', country: 'United States', currency: 'USD', acct_type: 'ADMIN', password: defaultAdminPw, role: 'admin' });
+    console.log(`Admin created: ${adminEmail}`);
+  } catch (e) {
+    console.error('Error creating admin:', e.message);
   }
-}
-
-// Seed demo client accounts if missing
-const demoClients = [
-  { email: 'alex.vance@vantagecapital.demo', name: 'Alex Vance', country: 'United States', currency: 'USD', acct_type: 'STANDARD_STP', password: 'DemoPassword123!', initialCents: 5000000 },
-  { email: 'elena.rostova@vantagecapital.demo', name: 'Elena Rostova', country: 'United Kingdom', currency: 'USD', acct_type: 'ECN_RAW', password: 'DemoPassword123!', initialCents: 2500000 }
-];
-for (const client of demoClients) {
-  const existing = await db.get('SELECT id FROM users WHERE email=?', client.email);
-  if (!existing) {
-    try {
-      await createUser({ email: client.email, name: client.name, country: client.country, currency: client.currency, acct_type: client.acct_type, password: client.password, role: 'user' });
-      if (client.initialCents > 0) {
-        const u = await db.get('SELECT id FROM users WHERE email=?', client.email);
-        await db.run('UPDATE users SET balance_cents=? WHERE id=?', client.initialCents, u.id);
-        await db.run(
-          "INSERT INTO tx(user_id,kind,amount,amount_cents,status,note,ref,created_at) VALUES(?,?,?,?,?,?,?,?)",
-          u.id, 'deposit', dollars(client.initialCents), client.initialCents, 'completed', 'Initial Capital Allocation', refNo('INIT'), Date.now() - 864e5
-        );
-      }
-      console.log(`Demo client created: ${client.email}`);
-    } catch (e) {
-      console.error('Error creating demo client:', e.message);
-    }
-  }
+} else {
+  await db.run("UPDATE users SET role='admin' WHERE id=?", existingAdmin.id);
 }
 
 // ---- throttling ----
