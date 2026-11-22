@@ -17,7 +17,8 @@ const PORT = process.env.PORT || 3000;
 const IS_PROD = process.env.NODE_ENV === 'production' || !!process.env.RENDER;
 const MAX_BODY = 100 * 1024;
 const MAX_CENTS = 100_000_000_00; // $100M hard ceiling per operation
-const SANDBOX = process.env.SANDBOX_MODE !== 'false';
+// Self-allocation is disabled: deposits NEVER auto-credit. All funding must be approved or allocated by Admin.
+const SANDBOX = process.env.SANDBOX_MODE === 'true';
 const DELAY = Math.max(5, Number(process.env.SANDBOX_DELAY_SEC) || 40) * 1000;
 const TEST_BANK = { beneficiary: 'Vantage Capital Asset Management LLC (TEST)', bankName: 'Vantage Test Bank (Sandbox)', routing: '110000000', accountType: 'Checking', address: '1 Test Street, New York, NY 10001' };
 
@@ -170,29 +171,9 @@ const clientIp = req => {
   return req.headers['x-real-ip'] || req.socket.remoteAddress || '127.0.0.1';
 };
 
-// ---- sandbox settlement: pending -> processing -> completed (idempotent; credits a deposit exactly once) ----
+// ---- settlement: deposits NEVER auto-credit; they require admin confirmation in the Admin Portal ----
 async function settleDue() {
-  if (!SANDBOX) return;
-  const now = Date.now();
-  try {
-    const due = await db.all("SELECT id FROM tx WHERE status IN ('pending','processing') AND settle_at IS NOT NULL AND (process_at<=? OR settle_at<=?)", now, now);
-    for (const { id } of due) {
-      await db.tx(async txDb => {
-        const t = await txDb.get("SELECT * FROM tx WHERE id=? AND status IN ('pending','processing')", id);
-        if (!t) return;
-        if (now >= t.settle_at) {
-          const r = await txDb.run("UPDATE tx SET status='completed' WHERE id=? AND status IN ('pending','processing')", id);
-          if (r.changes === 1 && t.kind === 'deposit') {
-            await txDb.run('UPDATE users SET balance_cents=balance_cents+? WHERE id=?', t.amount_cents, t.user_id);
-          }
-        } else if (t.status === 'pending' && now >= t.process_at) {
-          await txDb.run("UPDATE tx SET status='processing' WHERE id=? AND status='pending'", id);
-        }
-      });
-    }
-  } catch (e) {
-    console.error('settle failed', e.message);
-  }
+  // Auto-crediting is completely disabled: only an admin can approve and credit deposits.
 }
 
 // ---- helpers ----

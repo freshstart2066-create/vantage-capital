@@ -1238,8 +1238,7 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       currentDayLoss: 0,
       status: 'IN_PROGRESS',
     }));
-    resetAccount(tier);
-    setToastMessage({ text: `Portfolio Allocation Mandate updated to $${tier.toLocaleString()}`, type: 'success' });
+    // Note: User balance is never reset here; capital allocation is exclusively controlled by the Admin
   };
 
   const resetPropEvaluation = () => {
@@ -1250,7 +1249,7 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       currentDayLoss: 0,
       status: 'IN_PROGRESS',
     }));
-    resetAccount(propEvaluation.tier);
+    // Note: User balance is never reset here; capital allocation is exclusively controlled by the Admin
     setToastMessage({ text: 'Strategy Forward-Testing Risk Monitor Reset', type: 'info' });
   };
 

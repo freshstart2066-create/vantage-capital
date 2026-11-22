@@ -3,7 +3,6 @@ import { useTrading } from '../../context/TradingContext';
 import {
   ShieldCheck,
   AlertTriangle,
-  RotateCcw,
   Target,
   TrendingDown,
 } from 'lucide-react';
@@ -11,8 +10,6 @@ import {
 export const PropChallengeWidget: React.FC = () => {
   const {
     propEvaluation,
-    setPropTier,
-    resetPropEvaluation,
     account,
   } = useTrading();
 
@@ -32,8 +29,6 @@ export const PropChallengeWidget: React.FC = () => {
     100,
     Math.round((currentDrawdown / maxTotalDrawdownAmount) * 100)
   );
-
-  const tiers = [10000, 25000, 50000, 100000, 250000];
 
   return (
     <div className="rounded-lg border border-slate-800 bg-slate-900/70 p-4 flex flex-col gap-3">
@@ -70,32 +65,14 @@ export const PropChallengeWidget: React.FC = () => {
           </div>
         </div>
 
-        {/* Portfolio Tier Selector & Reset */}
-        <div className="flex items-center gap-1.5">
-          <div className="flex items-center border border-slate-800 bg-slate-950 p-0.5 rounded">
-            {tiers.map(t => (
-              <button
-                key={t}
-                onClick={() => setPropTier(t)}
-                className={`px-2 py-0.5 text-[11px] font-mono font-medium rounded transition-colors ${
-                  tier === t
-                    ? 'bg-slate-800 text-slate-100 border border-slate-700'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-                title={`Portfolio scale: $${t.toLocaleString()}`}
-              >
-                ${t >= 1000 ? `${t / 1000}k` : t}
-              </button>
-            ))}
+        {/* Read-Only Mandate Display (Allocations strictly managed by Admin) */}
+        <div className="flex items-center gap-2">
+          <div className="px-2.5 py-1 text-[11px] font-mono font-medium rounded border border-slate-800 bg-slate-950 text-slate-300">
+            Mandate Scale:{' '}
+            <span className="font-bold text-slate-100">
+              ${(tier > 0 ? tier : account.balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
+            </span>
           </div>
-
-          <button
-            onClick={resetPropEvaluation}
-            className="rounded border border-slate-800 hover:bg-slate-800 p-1 text-slate-400 hover:text-slate-200 transition-colors"
-            title="Reset Mandate Tracking"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-          </button>
         </div>
       </div>
 
