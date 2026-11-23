@@ -1,5 +1,5 @@
 import React from 'react';
-import { Building2, Server, Shield, Cpu, Users, Landmark, Lock } from 'lucide-react';
+import { Building2, Server, Shield, Cpu, Users, Landmark, Lock, Mail, MapPin, Globe } from 'lucide-react';
 
 export const CompanyAbout: React.FC = () => {
   return (
@@ -163,6 +163,52 @@ export const CompanyAbout: React.FC = () => {
               <div className="text-xs font-bold text-[var(--text-primary)]">Elena Rostova, Ph.D.</div>
               <div className="text-[11px] text-[var(--text-muted)]">Chief Quantitative Strategist & Execution Research</div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Institutional Contact & Official Inquiries */}
+      <div className="neo-box p-6 space-y-4">
+        <h2 className="text-base font-bold text-[var(--text-primary)] flex items-center gap-2">
+          <Mail className="w-4 h-4 text-[var(--accent-brand)]" />
+          Institutional Contact & Desk Communications
+        </h2>
+        <p className="text-xs text-[var(--text-muted)]">
+          For accredited client inquiries, depository settlement notices, and portfolio allocation requests, contact our operational desk:
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+          <div className="neo-inset p-3.5 rounded-xl space-y-1">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] flex items-center gap-1.5">
+              <Mail className="w-3.5 h-3.5 text-[var(--accent-brand)]" />
+              Official Email
+            </div>
+            <a href="mailto:admin@vantagecapital.website" className="font-semibold text-[var(--accent-brand)] hover:underline block break-all">
+              admin@vantagecapital.website
+            </a>
+            <div className="text-[10px] text-[var(--text-muted)]">24/7 Depository & Operational Desk</div>
+          </div>
+
+          <div className="neo-inset p-3.5 rounded-xl space-y-1">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] flex items-center gap-1.5">
+              <MapPin className="w-3.5 h-3.5 text-[var(--accent-long)]" />
+              Depository Headquarters
+            </div>
+            <div className="font-semibold text-[var(--text-primary)]">
+              1680 Capital One Drive
+            </div>
+            <div className="text-[10px] text-[var(--text-muted)]">McLean, VA 22102, United States</div>
+          </div>
+
+          <div className="neo-inset p-3.5 rounded-xl space-y-1">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] flex items-center gap-1.5">
+              <Globe className="w-3.5 h-3.5 text-[var(--accent-brand)]" />
+              Secure Web Portal
+            </div>
+            <a href="https://vantagecapital.website" className="font-semibold text-[var(--text-primary)] hover:underline block">
+              vantagecapital.website
+            </a>
+            <div className="text-[10px] text-[var(--text-muted)]">Direct Market Access & Verification</div>
           </div>
         </div>
       </div>

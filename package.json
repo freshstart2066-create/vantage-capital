@@ -14,8 +14,10 @@
     "start": "node --experimental-sqlite server/index.js"
   },
   "dependencies": {
+    "@types/nodemailer": "^8.0.2",
     "canvas-confetti": "^1.9.4",
     "lucide-react": "^1.73.0",
+    "nodemailer": "^10.6.1",
     "pg": "^8.23.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"

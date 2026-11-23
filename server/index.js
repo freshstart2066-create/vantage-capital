@@ -9,6 +9,13 @@ import crypto from 'node:crypto';
 import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { db, isPostgres } from './db.js';
+import {
+  sendWelcomeEmail,
+  sendDepositReportedEmail,
+  sendDepositConfirmedEmail,
+  sendWithdrawalRequestedEmail,
+  sendWithdrawalDispatchedEmail,
+} from './email.js';
 
 const scrypt = promisify(crypto.scrypt);
 const __dir = path.dirname(fileURLToPath(import.meta.url));
@@ -117,7 +124,7 @@ async function createUser({ email, name, country, currency, acct_type, password,
 
 // ---- admin bootstrap ----
 const defaultAdminPw = process.env.ADMIN_PASSWORD || 'VantageAdmin2026!';
-const adminEmail = (process.env.ADMIN_EMAIL || 'admin@vantagecapital.com').toLowerCase();
+const adminEmail = (process.env.ADMIN_EMAIL || 'admin@vantagecapital.website').toLowerCase();
 const existingAdmin = await db.get('SELECT id FROM users WHERE email=?', adminEmail);
 if (!existingAdmin) {
   try {
@@ -217,6 +224,7 @@ async function api(req, res, p) {
     const acct_type = ['ECN_RAW', 'STANDARD_STP'].includes(b.accountType) ? b.accountType : 'STANDARD_STP';
     await createUser({ email, name, country: str(b.country, 60), currency, acct_type, password, role: 'user' });
     const u = await db.get('SELECT * FROM users WHERE email=?', email);
+    sendWelcomeEmail({ to: u.email, name: u.name, accountId: u.account_no }).catch(err => console.error('[Email Error] Welcome email failed:', err.message));
     return send(res, 200, { token: sign({ uid: u.id, exp: Date.now() + 7 * 864e5 }), user: pub(u) });
   }
   if (p === '/api/login') {
@@ -280,6 +288,14 @@ async function api(req, res, p) {
       "INSERT INTO tx(user_id,kind,amount,amount_cents,status,note,detail,ref,process_at,settle_at,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
       me.id, 'deposit', dollars(c), c, 'pending', 'Bank wire transfer (awaiting confirmation)', JSON.stringify(detail), ref, null, null, now
     );
+    sendDepositReportedEmail({
+      to: me.email,
+      name: me.name,
+      amount: dollars(c),
+      referenceId: ref,
+      originatingBank: str(b.senderBankName, 120),
+      accountId: me.account_no,
+    }).catch(err => console.error('[Email Error] Deposit notice email failed:', err.message));
     return send(res, 200, { ok: true, referenceId: ref });
   }
 
@@ -307,6 +323,14 @@ async function api(req, res, p) {
       const updated = await txDb.get('SELECT balance_cents FROM users WHERE id=?', me.id);
       return updated.balance_cents;
     });
+    sendWithdrawalRequestedEmail({
+      to: me.email,
+      name: me.name,
+      amount: dollars(c),
+      referenceId: ref,
+      bankName: bank,
+      accountLast4: acct.slice(-4),
+    }).catch(err => console.error('[Email Error] Withdrawal request email failed:', err.message));
     return send(res, 200, { ok: true, referenceId: ref, balance: dollars(out) });
   }
 
@@ -372,15 +396,29 @@ async function api(req, res, p) {
   if (p === '/api/admin/credit') {
     const c = toCents(b.amount), uid = Number(b.userId);
     if (!c || !Number.isInteger(uid)) throw new HttpError(400, 'Pick a user and enter an amount above zero.');
+    let recipientUser = null;
     await db.tx(async txDb => {
-      const u = await txDb.get("SELECT id FROM users WHERE id=?", uid);
+      const u = await txDb.get("SELECT id, name, email, account_no FROM users WHERE id=?", uid);
       if (!u) throw new HttpError(404, 'User not found.');
       await txDb.run('UPDATE users SET balance_cents=balance_cents+? WHERE id=?', c, uid);
+      const ref = refNo('ADM');
       await txDb.run(
         "INSERT INTO tx(user_id,kind,amount,amount_cents,status,note,ref,decided_by,created_at) VALUES(?,?,?,?,?,?,?,?,?)",
-        uid, 'deposit', dollars(c), c, 'completed', str(b.note, 140) || 'Admin credit', refNo('ADM'), me.id, Date.now()
+        uid, 'deposit', dollars(c), c, 'completed', str(b.note, 140) || 'Admin credit', ref, me.id, Date.now()
       );
+      const updated = await txDb.get("SELECT balance_cents FROM users WHERE id=?", uid);
+      recipientUser = { ...u, balance_cents: updated.balance_cents, ref };
     });
+    if (recipientUser) {
+      sendDepositConfirmedEmail({
+        to: recipientUser.email,
+        name: recipientUser.name,
+        amount: dollars(c),
+        referenceId: recipientUser.ref,
+        newBalance: dollars(recipientUser.balance_cents),
+        accountId: recipientUser.account_no,
+      }).catch(err => console.error('[Email Error] Credit email failed:', err.message));
+    }
     return send(res, 200, { ok: true });
   }
 
@@ -439,6 +477,7 @@ async function api(req, res, p) {
   if (p === '/api/admin/withdrawal' || p === '/api/admin/deposit') {
     const kind = p.endsWith('withdrawal') ? 'withdrawal' : 'deposit';
     if (b.action !== 'approve' && b.action !== 'reject') throw new HttpError(400, 'Action must be approve or reject.');
+    let notifyTarget = null;
     await db.tx(async txDb => {
       const t = await txDb.get("SELECT * FROM tx WHERE id=? AND kind=? AND status IN ('pending','processing')", Number(b.id), kind);
       if (!t) throw new HttpError(404, 'Request not found or already decided.');
@@ -450,7 +489,36 @@ async function api(req, res, p) {
       if (kind === 'deposit' && status === 'completed') {
         await txDb.run('UPDATE users SET balance_cents=balance_cents+? WHERE id=?', t.amount_cents, t.user_id);
       }
+      const u = await txDb.get('SELECT id, name, email, account_no, balance_cents FROM users WHERE id=?', t.user_id);
+      if (u) {
+        notifyTarget = { user: u, tx: t, status };
+      }
     });
+
+    if (notifyTarget && notifyTarget.status === 'completed') {
+      const { user: recipient, tx: decidedTx } = notifyTarget;
+      if (kind === 'deposit') {
+        sendDepositConfirmedEmail({
+          to: recipient.email,
+          name: recipient.name,
+          amount: dollars(decidedTx.amount_cents),
+          referenceId: decidedTx.ref,
+          newBalance: dollars(recipient.balance_cents),
+          accountId: recipient.account_no,
+        }).catch(err => console.error('[Email Error] Deposit confirmed email failed:', err.message));
+      } else if (kind === 'withdrawal') {
+        let parsedDetail = {};
+        try { parsedDetail = JSON.parse(decidedTx.detail || '{}'); } catch {}
+        sendWithdrawalDispatchedEmail({
+          to: recipient.email,
+          name: recipient.name,
+          amount: dollars(decidedTx.amount_cents),
+          referenceId: decidedTx.ref,
+          bankName: parsedDetail.bankName || 'Beneficiary Bank',
+        }).catch(err => console.error('[Email Error] Withdrawal dispatched email failed:', err.message));
+      }
+    }
+
     return send(res, 200, { ok: true });
   }
   throw new HttpError(404, 'Not found');

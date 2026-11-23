@@ -21,6 +21,10 @@ export const Footer: React.FC = () => {
               <Lock className="w-3 h-3 text-[var(--accent-long)]" />
               <span>Enterprise Ledger & Data Encryption</span>
             </div>
+            <div className="pt-1 text-[11px] text-[var(--text-muted)] space-y-1">
+              <div><span className="font-semibold text-[var(--text-secondary)]">Official Contact:</span> <a href="mailto:admin@vantagecapital.website" className="hover:text-[var(--accent-brand)] font-medium">admin@vantagecapital.website</a></div>
+              <div><span className="font-semibold text-[var(--text-secondary)]">Depository:</span> 1680 Capital One Drive, McLean, VA 22102</div>
+            </div>
           </div>
 
           {/* Col 2: Navigation Links */}
