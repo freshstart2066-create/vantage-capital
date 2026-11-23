@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 
+const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
 const SMTP_HOST = process.env.SMTP_HOST || '';
 const SMTP_PORT = Number(process.env.SMTP_PORT) || 587;
 const SMTP_USER = process.env.SMTP_USER || '';
@@ -28,6 +29,8 @@ if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
   } catch (err) {
     console.error('[Email] Failed to initialize SMTP transport:', err.message);
   }
+} else if (RESEND_API_KEY) {
+  console.log('[Email] Resend API Key active for automated email dispatch.');
 } else {
   console.log('[Email] No SMTP credentials configured. Outbound emails will be logged to console and saved.');
 }
@@ -60,7 +63,65 @@ export async function sendEmail({ to, subject, html, text }) {
   console.log(`Date: ${new Date().toUTCString()}`);
   console.log(`----------------------------------------------------------------`);
 
-  if (transporter) {
+  // 1. Try Resend API (Fast, reliable direct dispatch)
+  if (RESEND_API_KEY) {
+    try {
+      let fromAddress = `Vantage Capital <${FROM_EMAIL}>`;
+      let res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${RESEND_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: fromAddress,
+          to: [to],
+          subject,
+          html,
+          text: text || subject,
+        }),
+      });
+      let data = await res.json();
+
+      // If domain not yet verified on Resend, try onboarding fallback for account test address
+      if (res.status === 403 && data.message?.includes('not verified')) {
+        console.warn('[Email Warning] Domain vantagecapital.website is not yet verified on Resend. Trying onboarding@resend.dev...');
+        res = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${RESEND_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            from: 'Vantage Capital <onboarding@resend.dev>',
+            to: [to],
+            subject,
+            html,
+            text: text || subject,
+          }),
+        });
+        data = await res.json();
+      }
+
+      if (res.ok && data.id) {
+        console.log(`[Email] Successfully delivered via Resend to ${to} (MessageID: ${data.id})`);
+        record.sent = true;
+        record.messageId = data.id;
+        console.log(`================================================================\n`);
+        logEmail(record);
+        return record;
+      } else {
+        console.error(`[Email Resend Notice]`, data.message || data);
+        record.error = data.message;
+      }
+    } catch (err) {
+      console.error(`[Email Error] Failed delivering via Resend to ${to}:`, err.message);
+      record.error = err.message;
+    }
+  }
+
+  // 2. Fallback to SMTP transport if configured
+  if (transporter && !record.sent) {
     try {
       const info = await transporter.sendMail({
         from,
@@ -69,16 +130,17 @@ export async function sendEmail({ to, subject, html, text }) {
         html,
         text: text || subject,
       });
-      console.log(`[Email] Successfully delivered to ${to} (MessageID: ${info.messageId})`);
+      console.log(`[Email] Successfully delivered via SMTP to ${to} (MessageID: ${info.messageId})`);
       record.sent = true;
       record.messageId = info.messageId;
     } catch (err) {
-      console.error(`[Email Error] Failed delivering to ${to}:`, err.message);
+      console.error(`[Email Error] Failed delivering via SMTP to ${to}:`, err.message);
       record.error = err.message;
     }
-  } else {
-    console.log(`[Email Sim] Delivery simulated (configure SMTP_HOST, SMTP_USER, SMTP_PASS to deliver live).`);
-    record.sent = true;
+  }
+
+  if (!record.sent) {
+    console.log(`[Email Sim] Delivery simulated for ${to}.`);
     record.simulated = true;
   }
   console.log(`================================================================\n`);
