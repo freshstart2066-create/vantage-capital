@@ -100,11 +100,9 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
           <button onClick={onClose} aria-label="Close" className="neo-btn p-2 text-[var(--text-muted)]"><X className="w-4 h-4" /></button>
         </div>
 
-        {info?.sandbox && (
-          <div className="mt-4 p-3 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 text-xs">
-            <span className="font-semibold text-slate-100">Depository Instructions:</span> Use the institutional wire details below to initiate settlement. Submit the transfer notice to record your deposit.
-          </div>
-        )}
+        <div className="mt-4 p-3.5 rounded-xl bg-[var(--bg-sunken)] border border-[var(--border-subtle)] text-[var(--text-secondary)] text-xs">
+          <span className="font-semibold text-[var(--text-primary)]">Depository Instructions:</span> Use the institutional wire details below to initiate settlement through your bank. Submit the transfer notice below once sent to record your deposit.
+        </div>
 
         <div className="mt-4 flex gap-1 neo-inset-sm p-1 rounded-xl text-xs font-semibold" role="tablist">
           {(['deposit', 'history'] as const).map(t => (

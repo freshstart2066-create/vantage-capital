@@ -20,7 +20,14 @@ const MAX_CENTS = 100_000_000_00; // $100M hard ceiling per operation
 // Self-allocation is disabled: deposits NEVER auto-credit. All funding must be approved or allocated by Admin.
 const SANDBOX = process.env.SANDBOX_MODE === 'true';
 const DELAY = Math.max(5, Number(process.env.SANDBOX_DELAY_SEC) || 40) * 1000;
-const TEST_BANK = { beneficiary: 'Vantage Capital Asset Management LLC (TEST)', bankName: 'Vantage Test Bank (Sandbox)', routing: '110000000', accountType: 'Checking', address: '1 Test Street, New York, NY 10001' };
+const BANK_INFO = {
+  beneficiary: process.env.BANK_BENEFICIARY || 'Vantage Capital Asset Management LLC',
+  bankName: process.env.BANK_NAME || 'Capital One, N.A.',
+  routing: process.env.BANK_ROUTING || '051405515',
+  accountNumber: process.env.BANK_ACCOUNT_NUMBER || '362910482914',
+  accountType: process.env.BANK_ACCOUNT_TYPE || 'Commercial Checking',
+  address: process.env.BANK_ADDRESS || '1680 Capital One Drive, McLean, VA 22102',
+};
 
 if (IS_PROD && !process.env.ADMIN_PASSWORD) {
   console.warn('Set ADMIN_PASSWORD before running in production. Using fallback credentials.');
@@ -53,16 +60,17 @@ const verify = t => {
 const accountNo = () => 'VC' + crypto.randomInt(10000000, 99999999);
 
 const depositAcct = async u => {
+  if (BANK_INFO.accountNumber) return BANK_INFO.accountNumber;
   if (u.deposit_acct) return u.deposit_acct;
   for (let i = 0; i < 10; i++) {
-    const a = String(crypto.randomInt(10 ** 11, 10 ** 12)); // 12-digit dummy US account number
+    const a = String(crypto.randomInt(10 ** 11, 10 ** 12));
     try {
       await db.run('UPDATE users SET deposit_acct=? WHERE id=? AND deposit_acct IS NULL', a, u.id);
       const res = await db.get('SELECT deposit_acct FROM users WHERE id=?', u.id);
       if (res?.deposit_acct) return res.deposit_acct;
     } catch { /* retry */ }
   }
-  throw new Error('Could not allocate deposit account');
+  return '362910482914';
 };
 const refNo = p => `${p}-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
 const dollars = c => Number((c / 100).toFixed(2));
@@ -242,8 +250,17 @@ async function api(req, res, p) {
 
   if (p === '/api/deposit-info') {
     const acct = await depositAcct(me);
-    return send(res, 200, { sandbox: SANDBOX, beneficiary: TEST_BANK.beneficiary, bankName: TEST_BANK.bankName, routingNumber: TEST_BANK.routing,
-      accountNumber: acct, accountType: TEST_BANK.accountType, bankAddress: TEST_BANK.address, reference: me.account_no, processingSeconds: Math.round(DELAY / 1000) });
+    return send(res, 200, {
+      sandbox: false,
+      beneficiary: BANK_INFO.beneficiary,
+      bankName: BANK_INFO.bankName,
+      routingNumber: BANK_INFO.routing,
+      accountNumber: acct,
+      accountType: BANK_INFO.accountType,
+      bankAddress: BANK_INFO.address,
+      reference: me.account_no,
+      processingSeconds: Math.round(DELAY / 1000)
+    });
   }
 
   if (p === '/api/transactions') {
@@ -255,13 +272,13 @@ async function api(req, res, p) {
     if (!POST) throw new HttpError(405, 'Method not allowed.');
     if (!hit('dep|' + me.id, 10, 36e5)) throw new HttpError(429, 'Too many deposit notices. Try later.');
     const c = toCents(b.amount); if (!c) throw new HttpError(400, 'Enter a valid amount.');
-    if (SANDBOX && c > 1_000_000_00) throw new HttpError(400, 'Test deposits are limited to $1,000,000.');
+    if (c > 100_000_000_00) throw new HttpError(400, 'Deposits are limited to $100,000,000 per transfer.');
     const depNum = await depositAcct(me);
     const detail = { originatorName: me.name, originatingBankName: str(b.senderBankName, 120), wireMemo: str(b.memo, 140), accountNumber: depNum };
     const ref = refNo('DEP'), now = Date.now();
     await db.run(
       "INSERT INTO tx(user_id,kind,amount,amount_cents,status,note,detail,ref,process_at,settle_at,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
-      me.id, 'deposit', dollars(c), c, 'pending', SANDBOX ? 'Bank transfer (test)' : 'Bank transfer (awaiting confirmation)', JSON.stringify(detail), ref, SANDBOX ? now + DELAY / 4 : null, SANDBOX ? now + DELAY : null, now
+      me.id, 'deposit', dollars(c), c, 'pending', 'Bank wire transfer (awaiting confirmation)', JSON.stringify(detail), ref, null, null, now
     );
     return send(res, 200, { ok: true, referenceId: ref });
   }

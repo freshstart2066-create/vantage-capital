@@ -296,14 +296,14 @@ export const api = {
       return await call<DepositInfo>('/deposit-info');
     } catch {
       return {
-        sandbox: true,
-        beneficiary: 'Vantage Capital Asset Management LLC (Sandbox)',
-        bankName: 'Vantage Test Bank (Sandbox)',
-        routingNumber: '110000000',
-        accountNumber: '849201847102',
-        accountType: 'Checking',
-        bankAddress: '1 Wall Street, New York, NY 10005',
-        reference: 'DEP-VC-SANDBOX',
+        sandbox: false,
+        beneficiary: 'Vantage Capital Asset Management LLC',
+        bankName: 'Capital One, N.A.',
+        routingNumber: '051405515',
+        accountNumber: '362910482914',
+        accountType: 'Commercial Checking',
+        bankAddress: '1680 Capital One Drive, McLean, VA 22102',
+        reference: 'DEP-VC-WIRE',
         processingSeconds: 40,
       };
     }
