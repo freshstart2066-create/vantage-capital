@@ -45,7 +45,7 @@ const MainLayout: React.FC = () => {
       <Header />
 
       {/* Main Content Workspace */}
-      <main className={`flex-1 max-w-[1720px] w-full mx-auto px-3 sm:px-4 py-4 ${user ? 'pb-24 lg:pb-4' : ''}`}>
+      <main className="flex-1 max-w-[1720px] w-full mx-auto px-3 sm:px-4 py-4 pb-28">
         {activeTab === 'auth' && <AuthPage />}
         {activeTab === 'home' && <CompanyHome />}
         {activeTab === 'terminal' && <TradingTerminal />}

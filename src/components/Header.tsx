@@ -298,23 +298,79 @@ export const Header: React.FC = () => {
 
     </header>
 
-      {/* Mobile / iPad bottom tab bar (signed-in) */}
-      {user && (
-        <nav aria-label="Main" className="lg:hidden fixed bottom-0 inset-x-0 z-40 grid grid-cols-5 border-t border-[var(--border-subtle)] bg-[var(--bg-primary)]/95 backdrop-blur-md pb-[env(safe-area-inset-bottom)]">
-          {([
-            { id: 'terminal', label: 'Trade', icon: <Activity className="w-5 h-5" /> },
-            { id: 'strategy_lab', label: 'Lab', icon: <Award className="w-5 h-5" /> },
-            { id: 'markets', label: 'Markets', icon: <Globe className="w-5 h-5" /> },
-            { id: 'calendar', label: 'Calendar', icon: <Calendar className="w-5 h-5" /> },
-            { id: isAdmin ? 'admin' : 'profile', label: isAdmin ? 'Admin' : 'Account', icon: isAdmin ? <ShieldAlert className="w-5 h-5" /> : <User className="w-5 h-5" /> },
-          ] as NavItem[]).map(item => (
-            <button key={item.id} onClick={() => go(item.id)} aria-current={activeTab === item.id ? 'page' : undefined}
-              className={`flex flex-col items-center justify-center gap-0.5 min-h-14 text-[10px] font-semibold ${activeTab === item.id ? 'text-[var(--accent-brand)]' : 'text-[var(--text-muted)]'}`}>
-              {item.icon}<span>{item.label}</span>
-            </button>
-          ))}
-        </nav>
-      )}
+      {/* Mobile / Small Tablet Bottom Bar (Persistent, Fixed, Never Disappears on Scroll) */}
+      <nav
+        aria-label="Bottom Navigation"
+        className="md:hidden fixed bottom-0 inset-x-0 z-50 grid grid-cols-5 border-t border-[var(--border-subtle)] bg-[var(--bg-surface)]/95 backdrop-blur-md pb-[env(safe-area-inset-bottom)] shadow-lg"
+      >
+        {(user
+          ? [
+              { id: 'terminal', label: 'Trade', icon: <Activity className="w-5 h-5" /> },
+              { id: 'strategy_lab', label: 'Lab', icon: <Award className="w-5 h-5" /> },
+              { id: 'markets', label: 'Markets', icon: <Globe className="w-5 h-5" /> },
+              { id: 'calendar', label: 'Calendar', icon: <Calendar className="w-5 h-5" /> },
+              { id: isAdmin ? 'admin' : 'profile', label: isAdmin ? 'Admin' : 'Account', icon: isAdmin ? <ShieldAlert className="w-5 h-5" /> : <User className="w-5 h-5" /> },
+            ]
+          : [
+              { id: 'home', label: 'Home', icon: <Home className="w-5 h-5" /> },
+              { id: 'markets', label: 'Markets', icon: <Globe className="w-5 h-5" /> },
+              { id: 'calendar', label: 'Calendar', icon: <Calendar className="w-5 h-5" /> },
+              { id: 'company', label: 'About', icon: <Building2 className="w-5 h-5" /> },
+              { id: 'auth', label: 'Sign In', icon: <LogIn className="w-5 h-5" /> },
+            ]
+        ).map(item => (
+          <button
+            key={item.id}
+            onClick={() => go(item.id as ActiveTab)}
+            aria-current={activeTab === item.id ? 'page' : undefined}
+            className={`flex flex-col items-center justify-center gap-0.5 min-h-14 text-[10px] font-semibold transition-colors ${
+              activeTab === item.id
+                ? 'text-[var(--accent-brand)] font-bold'
+                : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+            }`}
+          >
+            {item.icon}
+            <span>{item.label}</span>
+          </button>
+        ))}
+      </nav>
+
+      {/* Desktop & Tablet Floating Institutional Navigation Dock (Persistent, Fixed at Bottom, Never Disappears on Scroll) */}
+      <nav
+        aria-label="Desktop Dock Navigation"
+        className="hidden md:flex fixed bottom-5 left-1/2 -translate-x-1/2 z-50 items-center gap-1.5 p-1.5 rounded-2xl bg-[var(--bg-surface)]/90 backdrop-blur-xl border border-[var(--border-subtle)] shadow-2xl"
+      >
+        {(user
+          ? [
+              { id: 'terminal', label: 'Trade', icon: <Activity className="w-4 h-4" /> },
+              { id: 'strategy_lab', label: 'Lab', icon: <Award className="w-4 h-4" /> },
+              { id: 'markets', label: 'Markets', icon: <Globe className="w-4 h-4" /> },
+              { id: 'calendar', label: 'Calendar', icon: <Calendar className="w-4 h-4" /> },
+              { id: isAdmin ? 'admin' : 'profile', label: isAdmin ? 'Admin' : 'Account', icon: isAdmin ? <ShieldAlert className="w-4 h-4" /> : <User className="w-4 h-4" /> },
+            ]
+          : [
+              { id: 'home', label: 'Home', icon: <Home className="w-4 h-4" /> },
+              { id: 'markets', label: 'Markets', icon: <Globe className="w-4 h-4" /> },
+              { id: 'calendar', label: 'Calendar', icon: <Calendar className="w-4 h-4" /> },
+              { id: 'company', label: 'About', icon: <Building2 className="w-4 h-4" /> },
+              { id: 'auth', label: 'Sign In', icon: <LogIn className="w-4 h-4" /> },
+            ]
+        ).map(item => (
+          <button
+            key={item.id}
+            onClick={() => go(item.id as ActiveTab)}
+            aria-current={activeTab === item.id ? 'page' : undefined}
+            className={`px-3.5 py-1.5 text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-all ${
+              activeTab === item.id
+                ? 'bg-[var(--accent-brand)] text-white shadow-md font-bold'
+                : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-sunken)]'
+            }`}
+          >
+            {item.icon}
+            <span>{item.label}</span>
+          </button>
+        ))}
+      </nav>
 
       <WithdrawalModal isOpen={isWithdrawOpen} onClose={() => setIsWithdrawOpen(false)} />
       <DepositModal isOpen={isDepositOpen} onClose={() => setIsDepositOpen(false)} />

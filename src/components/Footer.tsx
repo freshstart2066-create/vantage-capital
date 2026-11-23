@@ -7,7 +7,7 @@ export const Footer: React.FC = () => {
   const { setActiveTab } = useTrading();
 
   return (
-    <footer className="mt-12 border-t border-[var(--border-subtle)] bg-[var(--bg-sunken)]/40 py-10 px-4 text-xs">
+    <footer className="mt-12 border-t border-[var(--border-subtle)] bg-[var(--bg-sunken)]/40 pt-10 pb-28 md:pb-24 px-4 text-xs">
       <div className="max-w-[1720px] mx-auto space-y-8">
         {/* Main 4-Column Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
