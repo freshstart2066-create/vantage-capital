@@ -178,6 +178,14 @@ const session = async (p: string, b: unknown) => {
 };
 
 export const api = {
+  forgotPassword: async (email: string): Promise<{ ok: boolean; message: string }> => {
+    return await call<{ ok: boolean; message: string }>('/auth/forgot-password', { email });
+  },
+
+  resetPassword: async (token: string, newPassword: string): Promise<{ ok: boolean; message: string }> => {
+    return await call<{ ok: boolean; message: string }>('/auth/reset-password', { token, newPassword });
+  },
+
   login: async (email: string, password: string): Promise<ApiUser> => {
     try {
       return await session('/login', { email, password });

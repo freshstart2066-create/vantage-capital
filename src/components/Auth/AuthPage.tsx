@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTrading } from '../../context/TradingContext';
 import { VantageLogo } from '../VantageLogo';
 import { api } from '../../services/api';
@@ -60,6 +60,25 @@ export const AuthPage: React.FC = () => {
   const [forgotOpen, setForgotOpen] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotSent, setForgotSent] = useState(false);
+  const [forgotBusy, setForgotBusy] = useState(false);
+  const [forgotMsg, setForgotMsg] = useState('');
+
+  const [resetToken, setResetToken] = useState<string | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [resetBusy, setResetBusy] = useState(false);
+  const [resetError, setResetError] = useState('');
+  const [resetSuccess, setResetSuccess] = useState(false);
+
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const t = params.get('reset_token') || params.get('token');
+      if (t) {
+        setResetToken(t);
+      }
+    } catch {}
+  }, []);
 
   const rules = useMemo(
     () => [
@@ -115,16 +134,62 @@ export const AuthPage: React.FC = () => {
     }
   };
 
-  const handleForgot = (e: React.FormEvent) => {
+  const handleForgot = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!forgotEmail.includes('@')) return;
-    setForgotSent(true);
+    const clean = forgotEmail.trim().toLowerCase();
+    if (!clean || !clean.includes('@')) return;
+    setForgotBusy(true);
+    setForgotMsg('');
+    try {
+      const res = await api.forgotPassword(clean);
+      setForgotSent(true);
+      setForgotMsg(res.message || 'If an account exists with this email, a password reset authorization has been dispatched.');
+    } catch {
+      setForgotSent(true);
+      setForgotMsg('If an account exists with this email, a password reset authorization has been dispatched.');
+    } finally {
+      setForgotBusy(false);
+    }
   };
 
   const closeForgot = () => {
     setForgotOpen(false);
     setForgotSent(false);
     setForgotEmail('');
+    setForgotMsg('');
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPassword || newPassword.length < 8) {
+      return setResetError('Password must be at least 8 characters long.');
+    }
+    if (newPassword !== confirmPassword) {
+      return setResetError('Passwords do not match.');
+    }
+    if (!resetToken) return;
+    setResetBusy(true);
+    setResetError('');
+    try {
+      await api.resetPassword(resetToken, newPassword);
+      setResetSuccess(true);
+      try {
+        window.history.replaceState({}, '', window.location.pathname);
+      } catch {}
+    } catch (err) {
+      setResetError((err as Error).message || 'Failed to reset password. The link may have expired.');
+    } finally {
+      setResetBusy(false);
+    }
+  };
+
+  const closeReset = () => {
+    setResetToken(null);
+    setNewPassword('');
+    setConfirmPassword('');
+    setResetError('');
+    setResetSuccess(false);
+    switchMode('signin');
   };
 
   const PasswordField = (id: string, autoComplete: string, placeholder: string) => (
@@ -296,14 +361,95 @@ export const AuthPage: React.FC = () => {
               </button>
             </div>
             {forgotSent ? (
-              <p className="mt-4 text-sm text-[var(--text-secondary)]">
-                Automatic password reset is not enabled yet. Please contact your Vantage administrator to reset the password for {forgotEmail}.
-              </p>
+              <div className="mt-4 space-y-3">
+                <div className="p-3.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400 leading-relaxed">
+                  {forgotMsg || 'A secure password reset link has been dispatched to your email address. Please check your inbox within the next 60 minutes.'}
+                </div>
+                <button type="button" onClick={closeForgot} className={primaryBtn + ' mt-2'}>
+                  Return to Sign In
+                </button>
+              </div>
             ) : (
               <form onSubmit={handleForgot} className="mt-4 space-y-4">
-                <p className="text-sm text-[var(--text-muted)]">Enter your email to see how to reset your password.</p>
-                <input type="email" required placeholder="you@example.com" value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} className={inputCls} aria-label="Email" />
-                <button type="submit" className={primaryBtn}>Continue</button>
+                <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+                  Enter your registered account email. We will dispatch a secure, single-use password authorization link.
+                </p>
+                <input
+                  type="email"
+                  required
+                  placeholder="name@example.com"
+                  value={forgotEmail}
+                  onChange={e => setForgotEmail(e.target.value)}
+                  className={inputCls}
+                  aria-label="Email"
+                />
+                <button type="submit" disabled={forgotBusy} className={primaryBtn + ' disabled:opacity-60'}>
+                  {forgotBusy ? 'Dispatching Link…' : 'Send Reset Link'}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
+      {resetToken && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70" role="dialog" aria-modal="true" aria-labelledby="reset-title">
+          <div className="w-full max-w-sm rounded-xl bg-[var(--bg-surface-card)] border border-slate-400/30 p-6 shadow-2xl">
+            <div className="flex items-center justify-between">
+              <h3 id="reset-title" className="text-base font-semibold text-[var(--text-primary)]">Establish New Password</h3>
+              <button onClick={closeReset} aria-label="Close" className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {resetSuccess ? (
+              <div className="mt-4 space-y-3">
+                <div className="p-3.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400 leading-relaxed">
+                  Your password has been successfully updated. You may now sign in using your new credentials.
+                </div>
+                <button type="button" onClick={closeReset} className={primaryBtn + ' mt-2'}>
+                  Sign In to Account
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleResetPassword} className="mt-4 space-y-4">
+                <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+                  Please enter a new password for your Vantage Capital online banking account (minimum 8 characters).
+                </p>
+
+                {resetError && (
+                  <div className="p-2.5 rounded bg-rose-500/10 border border-rose-500/20 text-xs text-rose-400">
+                    {resetError}
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">New Password</label>
+                  <input
+                    type="password"
+                    required
+                    placeholder="Minimum 8 characters"
+                    value={newPassword}
+                    onChange={e => setNewPassword(e.target.value)}
+                    className={inputCls}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Confirm New Password</label>
+                  <input
+                    type="password"
+                    required
+                    placeholder="Re-enter password"
+                    value={confirmPassword}
+                    onChange={e => setConfirmPassword(e.target.value)}
+                    className={inputCls}
+                  />
+                </div>
+
+                <button type="submit" disabled={resetBusy} className={primaryBtn + ' disabled:opacity-60'}>
+                  {resetBusy ? 'Updating Password…' : 'Update Password'}
+                </button>
               </form>
             )}
           </div>

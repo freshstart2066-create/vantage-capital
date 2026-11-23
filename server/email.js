@@ -630,3 +630,132 @@ export async function sendAdminAlert({ subject, title, details = [], actionUrl }
     text: `${title}\n\n` + details.map(d => `${d.label}: ${d.value}`).join('\n') + `\n\nAdmin Portal: https://vantagecapital.website/admin`,
   });
 }
+
+/**
+ * 7. Automated Password Reset Request Email
+ */
+export async function sendPasswordResetEmail({ to, name, resetUrl }) {
+  const subject = `Password Reset Request — Vantage Capital Online Banking`;
+  const content = `
+    <p style="margin: 0 0 16px 0; font-size: 15px;">Dear ${name},</p>
+    
+    <p style="margin: 0 0 16px 0;">
+      We received a request to reset the password for your Vantage Capital institutional custody and online banking profile.
+    </p>
+
+    <!-- Request Details Table -->
+    <table width="100%" cellpadding="11" cellspacing="0" border="0" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; margin-bottom: 24px;">
+      <tr>
+        <td style="font-size: 13px; color: #64748b; border-bottom: 1px solid #e2e8f0; padding: 11px 16px;">Account Holder:</td>
+        <td align="right" style="font-size: 13px; font-weight: bold; color: #1e293b; border-bottom: 1px solid #e2e8f0; padding: 11px 16px;">${name}</td>
+      </tr>
+      <tr>
+        <td style="font-size: 13px; color: #64748b; border-bottom: 1px solid #e2e8f0; padding: 11px 16px;">Registered Email:</td>
+        <td align="right" style="font-size: 13px; font-weight: bold; color: #1e293b; border-bottom: 1px solid #e2e8f0; padding: 11px 16px;">${to}</td>
+      </tr>
+      <tr>
+        <td style="font-size: 13px; color: #64748b; border-bottom: 1px solid #e2e8f0; padding: 11px 16px;">Link Validity:</td>
+        <td align="right" style="font-size: 13px; font-weight: bold; color: #b45309; border-bottom: 1px solid #e2e8f0; padding: 11px 16px;">60 Minutes (Single Use)</td>
+      </tr>
+      <tr>
+        <td style="font-size: 13px; color: #64748b; padding: 11px 16px;">Request Source:</td>
+        <td align="right" style="font-size: 13px; font-weight: bold; color: #1e293b; padding: 11px 16px;">Security & Authorization Desk</td>
+      </tr>
+    </table>
+
+    <p style="margin: 0 0 20px 0; font-size: 13px; color: #475569; line-height: 1.6;">
+      To establish a new password for your account, select the secure verification button below. For security purposes, this authorization link will expire in 60 minutes.
+    </p>
+
+    <!-- Reset Password Button -->
+    <table cellpadding="0" cellspacing="0" border="0" style="margin: 24px 0;">
+      <tr>
+        <td align="center" style="background-color: #004879; border-radius: 4px;">
+          <a href="${resetUrl}" style="display: inline-block; padding: 13px 32px; font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-weight: bold; color: #ffffff; text-decoration: none; letter-spacing: 0.5px;">Reset Your Password</a>
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin: 0 0 20px 0; font-size: 12px; color: #64748b; line-height: 1.5;">
+      If the button above does not open, copy and paste the following URL into your browser:<br>
+      <a href="${resetUrl}" style="color: #004879; word-break: break-all;">${resetUrl}</a>
+    </p>
+
+    <!-- Security Reminder Box -->
+    <table width="100%" cellpadding="14" cellspacing="0" border="0" style="background-color: #fbf7ee; border-left: 4px solid #d97706; border-radius: 2px; margin: 24px 0;">
+      <tr>
+        <td style="font-size: 12px; color: #78350f; line-height: 1.5; font-family: Arial, Helvetica, sans-serif;">
+          <strong>Did not request this change?</strong> If you did not initiate this request, no action is required—your password will remain unchanged. If you suspect unauthorized access, contact our fraud desk immediately at <a href="mailto:admin@vantagecapital.website" style="color: #78350f; text-decoration: underline;">admin@vantagecapital.website</a>.
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin: 20px 0 4px 0; font-size: 13px; color: #64748b;">Sincerely,</p>
+    <p style="margin: 0; font-size: 13px; font-weight: bold; color: #1e293b;">Security & Client Protection Services</p>
+    <p style="margin: 2px 0 0 0; font-size: 12px; color: #64748b;">Vantage Capital Technologies, Inc.</p>
+  `;
+
+  await sendEmail({
+    to,
+    subject,
+    html: wrapHtml('Password Reset Authorization', 'Instructions to establish a new password for your account', content),
+    text: `Password Reset Request\n\nDear ${name},\nWe received a request to reset your password.\nReset Link (valid 60 min): ${resetUrl}\n\nIf you did not request this, ignore this email.\nSupport: admin@vantagecapital.website`,
+  });
+}
+
+/**
+ * 8. Automated Password Changed Confirmation Email
+ */
+export async function sendPasswordChangedEmail({ to, name }) {
+  const subject = `Security Alert: Your Vantage Capital password was changed`;
+  const content = `
+    <p style="margin: 0 0 16px 0; font-size: 15px;">Dear ${name},</p>
+    
+    <p style="margin: 0 0 16px 0;">
+      This email confirms that the password for your Vantage Capital online banking profile was successfully changed on <strong>${new Date().toUTCString()}</strong>.
+    </p>
+
+    <table width="100%" cellpadding="11" cellspacing="0" border="0" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; margin-bottom: 24px;">
+      <tr>
+        <td style="font-size: 13px; color: #64748b; border-bottom: 1px solid #e2e8f0; padding: 11px 16px;">Account Holder:</td>
+        <td align="right" style="font-size: 13px; font-weight: bold; color: #1e293b; border-bottom: 1px solid #e2e8f0; padding: 11px 16px;">${name}</td>
+      </tr>
+      <tr>
+        <td style="font-size: 13px; color: #64748b; border-bottom: 1px solid #e2e8f0; padding: 11px 16px;">Account Status:</td>
+        <td align="right" style="font-size: 13px; font-weight: bold; color: #00875a; border-bottom: 1px solid #e2e8f0; padding: 11px 16px;">Secured &bull; Active</td>
+      </tr>
+      <tr>
+        <td style="font-size: 13px; color: #64748b; padding: 11px 16px;">Change Status:</td>
+        <td align="right" style="font-size: 13px; font-weight: bold; color: #00875a; padding: 11px 16px;">Completed Successfully</td>
+      </tr>
+    </table>
+
+    <!-- Security Alert Box -->
+    <table width="100%" cellpadding="14" cellspacing="0" border="0" style="background-color: #fbf7ee; border-left: 4px solid #d97706; border-radius: 2px; margin: 24px 0;">
+      <tr>
+        <td style="font-size: 12px; color: #78350f; line-height: 1.5; font-family: Arial, Helvetica, sans-serif;">
+          <strong>Did you not make this change?</strong> If you did not authorize this password update, someone may have unauthorized access to your email or account. Lock your account immediately and contact our security desk at <a href="mailto:admin@vantagecapital.website" style="color: #78350f; text-decoration: underline;">admin@vantagecapital.website</a>.
+        </td>
+      </tr>
+    </table>
+
+    <table cellpadding="0" cellspacing="0" border="0" style="margin: 24px 0;">
+      <tr>
+        <td align="center" style="background-color: #004879; border-radius: 4px;">
+          <a href="https://vantagecapital.website" style="display: inline-block; padding: 13px 32px; font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-weight: bold; color: #ffffff; text-decoration: none; letter-spacing: 0.5px;">Sign In to Your Account</a>
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin: 20px 0 4px 0; font-size: 13px; color: #64748b;">Sincerely,</p>
+    <p style="margin: 0; font-size: 13px; font-weight: bold; color: #1e293b;">Security & Client Protection Services</p>
+    <p style="margin: 2px 0 0 0; font-size: 12px; color: #64748b;">Vantage Capital Technologies, Inc.</p>
+  `;
+
+  await sendEmail({
+    to,
+    subject,
+    html: wrapHtml('Security Notice: Password Updated', 'Confirmation of account security change', content),
+    text: `Security Notice\n\nDear ${name},\nYour Vantage Capital password was changed on ${new Date().toUTCString()}.\n\nIf you did not make this change, contact admin@vantagecapital.website immediately.`,
+  });
+}

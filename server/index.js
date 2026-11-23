@@ -15,6 +15,8 @@ import {
   sendDepositConfirmedEmail,
   sendWithdrawalRequestedEmail,
   sendWithdrawalDispatchedEmail,
+  sendPasswordResetEmail,
+  sendPasswordChangedEmail,
 } from './email.js';
 
 const scrypt = promisify(crypto.scrypt);
@@ -236,6 +238,67 @@ async function api(req, res, p) {
     if (!ok) { hit(key, 99, 9e5); throw new HttpError(401, 'Incorrect email or password.'); }
     buckets.delete(key);
     return send(res, 200, { token: sign({ uid: u.id, exp: Date.now() + 7 * 864e5 }), user: pub(u) });
+  }
+
+  if (p === '/api/auth/forgot-password' || p === '/api/forgot-password') {
+    if (!POST) throw new HttpError(405, 'Method not allowed.');
+    const email = str(b.email, 254).toLowerCase();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw new HttpError(400, 'Please enter a valid email address.');
+    if (!hit('forgot|' + ip, 10, 9e5)) throw new HttpError(429, 'Too many requests. Please try again later.');
+
+    const u = await db.get('SELECT * FROM users WHERE email=?', email);
+    if (u) {
+      const resetToken = sign({
+        uid: u.id,
+        purpose: 'pwd_reset',
+        exp: Date.now() + 36e5, // 1 hour validity
+        v: (u.hash || '').slice(0, 16),
+      });
+      const appUrl = process.env.APP_URL || (IS_PROD ? 'https://vantagecapital.website' : `http://localhost:${PORT}`);
+      const resetUrl = `${appUrl}/?reset_token=${resetToken}`;
+      sendPasswordResetEmail({ to: u.email, name: u.name, resetUrl }).catch(err => {
+        console.error('[Email Error] Failed to send password reset email:', err.message);
+      });
+    }
+
+    return send(res, 200, {
+      ok: true,
+      message: 'If an account is associated with this email, a password reset link has been dispatched.',
+    });
+  }
+
+  if (p === '/api/auth/reset-password' || p === '/api/reset-password') {
+    if (!POST) throw new HttpError(405, 'Method not allowed.');
+    if (!hit('resetpw|' + ip, 15, 9e5)) throw new HttpError(429, 'Too many attempts. Please try again later.');
+    const token = typeof b.token === 'string' ? b.token : '';
+    const newPassword = typeof b.newPassword === 'string' ? b.newPassword : '';
+    if (!token) throw new HttpError(400, 'Reset token is required.');
+    if (newPassword.length < 8 || newPassword.length > 200) {
+      throw new HttpError(400, 'Password must be between 8 and 200 characters.');
+    }
+
+    const payload = verify(token);
+    if (!payload || payload.purpose !== 'pwd_reset') {
+      throw new HttpError(400, 'Invalid or expired password reset link. Please request a new one.');
+    }
+
+    const u = await db.get('SELECT * FROM users WHERE id=?', payload.uid);
+    if (!u || payload.v !== (u.hash || '').slice(0, 16)) {
+      throw new HttpError(400, 'This password reset link has already been used or has expired.');
+    }
+
+    const salt = crypto.randomBytes(16).toString('hex');
+    const hash = await hashPw(newPassword, salt);
+    await db.run('UPDATE users SET salt=?, hash=? WHERE id=?', salt, hash, u.id);
+
+    sendPasswordChangedEmail({ to: u.email, name: u.name }).catch(err => {
+      console.error('[Email Error] Failed to send password changed notice:', err.message);
+    });
+
+    return send(res, 200, {
+      ok: true,
+      message: 'Your password has been reset successfully. You can now sign in.',
+    });
   }
 
   if (p === '/api/config') return send(res, 200, { sandbox: SANDBOX });
