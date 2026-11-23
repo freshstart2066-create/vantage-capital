@@ -183,6 +183,15 @@ export const CompanyHome: React.FC = () => {
             >
               Gold (XAU)
             </button>
+            <button
+              onClick={() => {
+                setActiveInstrument('POLY/FED-RATE');
+                setActiveTab('terminal');
+              }}
+              className="neo-btn py-1.5 px-3 text-xs font-mono font-bold bg-purple-500/10 text-purple-300 border border-purple-500/30 hover:bg-purple-500/20"
+            >
+              Polymarket Bets
+            </button>
           </div>
         </div>
 

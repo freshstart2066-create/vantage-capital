@@ -10,6 +10,7 @@ export const MarketWatch: React.FC = () => {
 
   const categories: { id: 'all' | AssetCategory; label: string }[] = [
     { id: 'all', label: 'All' },
+    { id: 'prediction', label: 'Polymarket' },
     { id: 'forex', label: 'Forex' },
     { id: 'stock', label: 'Equities' },
     { id: 'commodity', label: 'Commodities' },

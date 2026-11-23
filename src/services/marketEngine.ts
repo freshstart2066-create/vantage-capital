@@ -13,7 +13,7 @@ export function generateHistoricalCandles(instrument: Instrument, timeframe: Tim
 
   // Base price and relative volatility
   let price = instrument.currentPrice;
-  const volatility = price * (instrument.category === 'forex' ? 0.0008 : 0.0035);
+  const volatility = price * (instrument.category === 'forex' ? 0.0008 : instrument.category === 'prediction' ? 0.006 : 0.0035);
 
   // Generate backward in time
   const tempPrices: { open: number; high: number; low: number; close: number; volume: number; time: number }[] = [];
@@ -22,7 +22,10 @@ export function generateHistoricalCandles(instrument: Instrument, timeframe: Tim
     const candleTime = now - (count - 1 - i) * intervalMs;
     const change = (Math.random() - 0.49) * volatility;
     const open = price;
-    const close = Math.max(open + change, price * 0.5);
+    let close = Math.max(open + change, price * 0.5);
+    if (instrument.category === 'prediction') {
+      close = Math.min(0.99, Math.max(0.01, close));
+    }
     const high = Math.max(open, close) + Math.random() * volatility * 0.8;
     const low = Math.min(open, close) - Math.random() * volatility * 0.8;
     const volume = Math.floor(Math.random() * 500) + 50;

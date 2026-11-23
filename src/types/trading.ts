@@ -1,4 +1,4 @@
-export type AssetCategory = 'forex' | 'stock' | 'commodity' | 'crypto';
+export type AssetCategory = 'forex' | 'stock' | 'commodity' | 'crypto' | 'prediction';
 
 export interface Instrument {
   symbol: string;
