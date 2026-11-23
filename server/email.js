@@ -150,21 +150,7 @@ export async function sendEmail({ to, subject, html, text }) {
 }
 
 /**
- * Helper to generate user initials for avatar
- */
-function getInitials(name) {
-  if (!name) return 'VC';
-  return name
-    .split(' ')
-    .filter(Boolean)
-    .map(n => n[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
-}
-
-/**
- * Standard branded HTML email template wrapper (Official Banking Style with Profile Picture & Brand Emblem)
+ * Standard branded HTML email template wrapper (Official Banking Style: Capital One / Chase format)
  */
 function wrapHtml(headline, subtitle, contentHtml) {
   return `<!DOCTYPE html>
@@ -179,61 +165,37 @@ function wrapHtml(headline, subtitle, contentHtml) {
     <tr>
       <td align="center">
         <!-- Main Institutional Card Container -->
-        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; background-color: #ffffff; border-radius: 6px; overflow: hidden; border: 1px solid #dcdfe4; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
-          
-          <!-- Top Capital One / Chase Style Brand Bar with Official Emblem Avatar -->
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; background-color: #ffffff; border-radius: 4px; overflow: hidden; border: 1px solid #dcdfe4; box-shadow: 0 2px 6px rgba(0,0,0,0.05);">
+          <!-- Top Capital One / Chase Style Brand Bar -->
           <tr>
-            <td style="background-color: #004879; padding: 20px 32px; border-bottom: 3px solid #003153;">
+            <td style="background-color: #004879; padding: 22px 36px; border-bottom: 3px solid #003153;">
               <table width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
-                  <td align="left" style="vertical-align: middle;">
-                    <table cellpadding="0" cellspacing="0" border="0">
-                      <tr>
-                        <td style="vertical-align: middle; padding-right: 14px;">
-                          <!-- Official Vantage Capital Brand Emblem Profile Picture -->
-                          <img src="https://vantagecapital.website/logo.png" alt="Vantage Capital Emblem" width="44" height="44" style="display: block; border-radius: 50%; border: 2px solid #d4af37; background-color: #003153;" />
-                        </td>
-                        <td style="vertical-align: middle;">
-                          <span style="font-family: Arial, Helvetica, sans-serif; font-size: 19px; font-weight: bold; letter-spacing: 2px; color: #ffffff; display: block; line-height: 1.2;">VANTAGE CAPITAL</span>
-                          <span style="font-family: Arial, Helvetica, sans-serif; font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px; color: #b8d4e9; display: block; margin-top: 2px;">Institutional Treasury & Custody</span>
-                        </td>
-                      </tr>
-                    </table>
+                  <td align="left">
+                    <span style="font-family: Arial, Helvetica, sans-serif; font-size: 19px; font-weight: bold; letter-spacing: 2px; color: #ffffff;">VANTAGE CAPITAL</span>
                   </td>
-                  <td align="right" style="vertical-align: middle;">
-                    <span style="display: inline-block; padding: 5px 12px; border-radius: 12px; background-color: rgba(255,255,255,0.12); color: #ffffff; font-size: 11px; font-weight: bold; letter-spacing: 0.5px; border: 1px solid rgba(255,255,255,0.22); font-family: Arial, sans-serif;">Official Notice</span>
+                  <td align="right" style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: #b8d4e9;">
+                    Treasury & Custody Services
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
-
           <!-- Body Content Area -->
           <tr>
-            <td style="padding: 34px 32px 28px 32px; font-family: Arial, Helvetica, sans-serif; font-size: 14px; color: #222222; line-height: 1.6;">
+            <td style="padding: 36px 36px 28px 36px; font-family: Arial, Helvetica, sans-serif; font-size: 14px; color: #222222; line-height: 1.6;">
               <h1 style="font-size: 21px; font-weight: bold; color: #004879; margin: 0 0 8px 0; line-height: 1.3;">${headline}</h1>
               ${subtitle ? `<p style="font-size: 13px; color: #64748b; margin: 0 0 24px 0; padding-bottom: 12px; border-bottom: 1px solid #eef2f6;">${subtitle}</p>` : '<div style="margin-bottom: 24px;"></div>'}
               ${contentHtml}
             </td>
           </tr>
-
           <!-- Bank Regulatory Footer -->
           <tr>
-            <td style="background-color: #f8fafc; padding: 24px 32px; font-family: Arial, Helvetica, sans-serif; font-size: 11px; color: #64748b; line-height: 1.6; border-top: 1px solid #e2e8f0;">
-              <table cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 14px;">
-                <tr>
-                  <td style="vertical-align: middle; padding-right: 10px;">
-                    <img src="https://vantagecapital.website/avatar.png" width="28" height="28" style="border-radius: 50%; border: 1px solid #cbd5e1; display: block;" alt="Seal" />
-                  </td>
-                  <td style="vertical-align: middle;">
-                    <span style="font-weight: bold; color: #1e293b; font-size: 12px;">Vantage Capital Technologies, Inc.</span>
-                    <span style="color: #64748b; font-size: 11px; display: block;">Depository & Settlement Operations Desk</span>
-                  </td>
-                </tr>
-              </table>
-              <p style="margin: 0 0 8px 0;">1680 Capital One Drive, McLean, VA 22102 &bull; Depository escrow accounts maintained at Capital One, N.A. (Member FDIC).</p>
+            <td style="background-color: #f8fafc; padding: 24px 36px; font-family: Arial, Helvetica, sans-serif; font-size: 11px; color: #64748b; line-height: 1.6; border-top: 1px solid #e2e8f0;">
+              <p style="margin: 0 0 6px 0; font-weight: bold; color: #1e293b; font-size: 12px;">Vantage Capital Technologies, Inc.</p>
+              <p style="margin: 0 0 8px 0;">Depository & Settlement Operations &bull; 1680 Capital One Drive, McLean, VA 22102</p>
               <p style="margin: 0 0 10px 0;">Client Support: <a href="mailto:admin@vantagecapital.website" style="color: #004879; text-decoration: underline;">admin@vantagecapital.website</a> &bull; Portal: <a href="https://vantagecapital.website" style="color: #004879; text-decoration: underline;">vantagecapital.website</a></p>
-              <p style="margin: 0 0 8px 0; color: #778899;">This is an automated operational transmission regarding your account. Please do not reply directly to this notification as the mailbox is unattended.</p>
+              <p style="margin: 0 0 8px 0; color: #778899;">This is an automated operational notification regarding your account. Please do not reply directly to this transmission as the mailbox is unattended. Depository escrow and commercial wire settlement accounts are maintained at Capital One, N.A. (Member FDIC).</p>
               <p style="margin: 0; color: #94a3b8;">&copy; ${new Date().getFullYear()} Vantage Capital. All rights reserved. Equal Housing Opportunity.</p>
             </td>
           </tr>
@@ -246,10 +208,9 @@ function wrapHtml(headline, subtitle, contentHtml) {
 }
 
 /**
- * 1. Automated Welcome Email for New Signups (Capital One / Chase Format with Profile Picture)
+ * 1. Automated Welcome Email for New Signups (Capital One / Chase Format)
  */
 export async function sendWelcomeEmail({ to, name, accountId }) {
-  const initials = getInitials(name);
   const subject = `Welcome to Vantage Capital: Important information regarding your new account`;
   const content = `
     <p style="margin: 0 0 16px 0; font-size: 15px;">Dear ${name},</p>
@@ -262,26 +223,11 @@ export async function sendWelcomeEmail({ to, name, accountId }) {
       Your client profile has been registered with our operations desk, providing you with direct access to our treasury management platform, market execution facilities, and dedicated custody infrastructure.
     </p>
 
-    <!-- Account Details Table with Client Profile Picture -->
+    <!-- Account Details Table (Bank Style) -->
     <table width="100%" cellpadding="11" cellspacing="0" border="0" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; margin-bottom: 24px;">
       <tr>
-        <td style="font-size: 13px; color: #64748b; border-bottom: 1px solid #e2e8f0; padding: 12px 16px; vertical-align: middle;">Account Holder:</td>
-        <td align="right" style="border-bottom: 1px solid #e2e8f0; padding: 12px 16px; vertical-align: middle;">
-          <table cellpadding="0" cellspacing="0" border="0" align="right">
-            <tr>
-              <td style="vertical-align: middle; padding-right: 10px;">
-                <!-- Client Profile Picture Avatar Circle -->
-                <div style="width: 34px; height: 34px; border-radius: 50%; background-color: #004879; color: #ffffff; font-weight: bold; font-size: 13px; line-height: 34px; text-align: center; border: 2px solid #cbd5e1; font-family: Arial, sans-serif;">
-                  ${initials}
-                </div>
-              </td>
-              <td style="vertical-align: middle; text-align: left;">
-                <div style="font-size: 14px; font-weight: bold; color: #1e293b; font-family: Arial, sans-serif;">${name}</div>
-                <div style="font-size: 10px; font-weight: bold; color: #047857; text-transform: uppercase; letter-spacing: 0.5px;">&#10003; Verified Client Profile</div>
-              </td>
-            </tr>
-          </table>
-        </td>
+        <td style="font-size: 13px; color: #64748b; border-bottom: 1px solid #e2e8f0; padding: 11px 16px;">Account Holder:</td>
+        <td align="right" style="font-size: 13px; font-weight: bold; color: #1e293b; border-bottom: 1px solid #e2e8f0; padding: 11px 16px;">${name}</td>
       </tr>
       <tr>
         <td style="font-size: 13px; color: #64748b; border-bottom: 1px solid #e2e8f0; padding: 11px 16px;">Account Number:</td>
@@ -330,7 +276,7 @@ export async function sendWelcomeEmail({ to, name, accountId }) {
       </tr>
     </table>
 
-    <!-- Security Reminder Box -->
+    <!-- Security Reminder Box (Chase / Capital One standard format) -->
     <table width="100%" cellpadding="14" cellspacing="0" border="0" style="background-color: #fbf7ee; border-left: 4px solid #d97706; border-radius: 2px; margin: 24px 0;">
       <tr>
         <td style="font-size: 12px; color: #78350f; line-height: 1.5; font-family: Arial, Helvetica, sans-serif;">
@@ -339,18 +285,9 @@ export async function sendWelcomeEmail({ to, name, accountId }) {
       </tr>
     </table>
 
-    <!-- Officer Profile Avatar Sign-off -->
-    <table cellpadding="0" cellspacing="0" border="0" style="margin-top: 24px;">
-      <tr>
-        <td style="vertical-align: middle; padding-right: 12px;">
-          <img src="https://vantagecapital.website/avatar.png" width="38" height="38" style="border-radius: 50%; border: 1.5px solid #cbd5e1; display: block;" alt="Desk Officer" />
-        </td>
-        <td style="vertical-align: middle;">
-          <p style="margin: 0; font-size: 13px; font-weight: bold; color: #1e293b; font-family: Arial, sans-serif;">Client Operations & Treasury Desk</p>
-          <p style="margin: 2px 0 0 0; font-size: 12px; color: #64748b; font-family: Arial, sans-serif;">Vantage Capital Technologies, Inc. &bull; McLean, VA</p>
-        </td>
-      </tr>
-    </table>
+    <p style="margin: 20px 0 4px 0; font-size: 13px; color: #64748b;">Sincerely,</p>
+    <p style="margin: 0; font-size: 13px; font-weight: bold; color: #1e293b;">Client Operations & Treasury Services</p>
+    <p style="margin: 2px 0 0 0; font-size: 12px; color: #64748b;">Vantage Capital Technologies, Inc.</p>
   `;
 
   await sendEmail({
@@ -378,7 +315,6 @@ export async function sendWelcomeEmail({ to, name, accountId }) {
  */
 export async function sendDepositReportedEmail({ to, name, amount, referenceId, originatingBank, accountId }) {
   const formattedAmount = Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const initials = getInitials(name);
   const subject = `Deposit Notification Received — Ref: ${referenceId}`;
   const content = `
     <p style="margin: 0 0 16px 0; font-size: 15px;">Dear ${name},</p>
@@ -386,24 +322,11 @@ export async function sendDepositReportedEmail({ to, name, amount, referenceId, 
       We have received your notification of an inbound transfer. Our treasury settlement operations desk has logged this transaction and is tracking incoming funds at our depository partner, Capital One, N.A.
     </p>
 
-    <!-- Transfer Details Table with Profile Avatar -->
+    <!-- Transfer Details Table -->
     <table width="100%" cellpadding="11" cellspacing="0" border="0" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; margin-bottom: 24px;">
       <tr>
-        <td style="font-size: 13px; color: #64748b; border-bottom: 1px solid #e2e8f0; padding: 12px 16px; vertical-align: middle;">Account Holder:</td>
-        <td align="right" style="border-bottom: 1px solid #e2e8f0; padding: 12px 16px; vertical-align: middle;">
-          <table cellpadding="0" cellspacing="0" border="0" align="right">
-            <tr>
-              <td style="vertical-align: middle; padding-right: 8px;">
-                <div style="width: 28px; height: 28px; border-radius: 50%; background-color: #004879; color: #ffffff; font-weight: bold; font-size: 11px; line-height: 28px; text-align: center; border: 1px solid #cbd5e1;">
-                  ${initials}
-                </div>
-              </td>
-              <td style="vertical-align: middle; font-size: 13px; font-weight: bold; color: #1e293b;">
-                ${name}
-              </td>
-            </tr>
-          </table>
-        </td>
+        <td style="font-size: 13px; color: #64748b; border-bottom: 1px solid #e2e8f0; padding: 11px 16px;">Account Holder:</td>
+        <td align="right" style="font-size: 13px; font-weight: bold; color: #1e293b; border-bottom: 1px solid #e2e8f0; padding: 11px 16px;">${name}</td>
       </tr>
       <tr>
         <td style="font-size: 13px; color: #64748b; border-bottom: 1px solid #e2e8f0; padding: 11px 16px;">Transfer Amount:</td>
@@ -440,17 +363,9 @@ export async function sendDepositReportedEmail({ to, name, amount, referenceId, 
       </tr>
     </table>
 
-    <table cellpadding="0" cellspacing="0" border="0" style="margin-top: 24px;">
-      <tr>
-        <td style="vertical-align: middle; padding-right: 12px;">
-          <img src="https://vantagecapital.website/avatar.png" width="38" height="38" style="border-radius: 50%; border: 1.5px solid #cbd5e1; display: block;" alt="Desk Officer" />
-        </td>
-        <td style="vertical-align: middle;">
-          <p style="margin: 0; font-size: 13px; font-weight: bold; color: #1e293b; font-family: Arial, sans-serif;">Treasury Settlement Operations</p>
-          <p style="margin: 2px 0 0 0; font-size: 12px; color: #64748b; font-family: Arial, sans-serif;">Vantage Capital Technologies, Inc. &bull; McLean, VA</p>
-        </td>
-      </tr>
-    </table>
+    <p style="margin: 20px 0 4px 0; font-size: 13px; color: #64748b;">Sincerely,</p>
+    <p style="margin: 0; font-size: 13px; font-weight: bold; color: #1e293b;">Treasury Settlement Operations</p>
+    <p style="margin: 2px 0 0 0; font-size: 12px; color: #64748b;">Vantage Capital Technologies, Inc.</p>
   `;
 
   await sendEmail({
@@ -482,7 +397,6 @@ export async function sendDepositReportedEmail({ to, name, amount, referenceId, 
 export async function sendDepositConfirmedEmail({ to, name, amount, referenceId, newBalance, accountId }) {
   const formattedAmount = Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const formattedBalance = Number(newBalance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const initials = getInitials(name);
   const subject = `Deposit Confirmation: $${formattedAmount} USD credited to your account`;
   const content = `
     <p style="margin: 0 0 16px 0; font-size: 15px;">Dear ${name},</p>
@@ -490,24 +404,11 @@ export async function sendDepositConfirmedEmail({ to, name, amount, referenceId,
       We are pleased to inform you that your wire transfer has successfully settled at our depository institution and has been credited to your active account balance.
     </p>
 
-    <!-- Credit Details Table with Profile Avatar -->
+    <!-- Credit Details Table -->
     <table width="100%" cellpadding="11" cellspacing="0" border="0" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; margin-bottom: 24px;">
       <tr>
-        <td style="font-size: 13px; color: #64748b; border-bottom: 1px solid #e2e8f0; padding: 12px 16px; vertical-align: middle;">Account Holder:</td>
-        <td align="right" style="border-bottom: 1px solid #e2e8f0; padding: 12px 16px; vertical-align: middle;">
-          <table cellpadding="0" cellspacing="0" border="0" align="right">
-            <tr>
-              <td style="vertical-align: middle; padding-right: 8px;">
-                <div style="width: 28px; height: 28px; border-radius: 50%; background-color: #004879; color: #ffffff; font-weight: bold; font-size: 11px; line-height: 28px; text-align: center; border: 1px solid #cbd5e1;">
-                  ${initials}
-                </div>
-              </td>
-              <td style="vertical-align: middle; font-size: 13px; font-weight: bold; color: #1e293b;">
-                ${name}
-              </td>
-            </tr>
-          </table>
-        </td>
+        <td style="font-size: 13px; color: #64748b; border-bottom: 1px solid #e2e8f0; padding: 11px 16px;">Account Holder:</td>
+        <td align="right" style="font-size: 13px; font-weight: bold; color: #1e293b; border-bottom: 1px solid #e2e8f0; padding: 11px 16px;">${name}</td>
       </tr>
       <tr>
         <td style="font-size: 13px; color: #64748b; border-bottom: 1px solid #e2e8f0; padding: 11px 16px;">Amount Credited:</td>
@@ -539,17 +440,9 @@ export async function sendDepositConfirmedEmail({ to, name, amount, referenceId,
       </tr>
     </table>
 
-    <table cellpadding="0" cellspacing="0" border="0" style="margin-top: 24px;">
-      <tr>
-        <td style="vertical-align: middle; padding-right: 12px;">
-          <img src="https://vantagecapital.website/avatar.png" width="38" height="38" style="border-radius: 50%; border: 1.5px solid #cbd5e1; display: block;" alt="Desk Officer" />
-        </td>
-        <td style="vertical-align: middle;">
-          <p style="margin: 0; font-size: 13px; font-weight: bold; color: #1e293b; font-family: Arial, sans-serif;">Treasury & Settlement Desk</p>
-          <p style="margin: 2px 0 0 0; font-size: 12px; color: #64748b; font-family: Arial, sans-serif;">Vantage Capital Technologies, Inc. &bull; McLean, VA</p>
-        </td>
-      </tr>
-    </table>
+    <p style="margin: 20px 0 4px 0; font-size: 13px; color: #64748b;">Sincerely,</p>
+    <p style="margin: 0; font-size: 13px; font-weight: bold; color: #1e293b;">Treasury & Settlement Desk</p>
+    <p style="margin: 2px 0 0 0; font-size: 12px; color: #64748b;">Vantage Capital Technologies, Inc.</p>
   `;
 
   await sendEmail({
@@ -565,7 +458,6 @@ export async function sendDepositConfirmedEmail({ to, name, amount, referenceId,
  */
 export async function sendWithdrawalRequestedEmail({ to, name, amount, referenceId, bankName, accountLast4 }) {
   const formattedAmount = Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const initials = getInitials(name);
   const subject = `Withdrawal Request Received — Ref: ${referenceId}`;
   const content = `
     <p style="margin: 0 0 16px 0; font-size: 15px;">Dear ${name},</p>
@@ -573,24 +465,11 @@ export async function sendWithdrawalRequestedEmail({ to, name, amount, reference
       We have received your withdrawal request. Your transaction has been logged and forwarded to our compliance and settlement department for standard security verification.
     </p>
 
-    <!-- Withdrawal Details Table with Profile Avatar -->
+    <!-- Withdrawal Details Table -->
     <table width="100%" cellpadding="11" cellspacing="0" border="0" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; margin-bottom: 24px;">
       <tr>
-        <td style="font-size: 13px; color: #64748b; border-bottom: 1px solid #e2e8f0; padding: 12px 16px; vertical-align: middle;">Account Holder:</td>
-        <td align="right" style="border-bottom: 1px solid #e2e8f0; padding: 12px 16px; vertical-align: middle;">
-          <table cellpadding="0" cellspacing="0" border="0" align="right">
-            <tr>
-              <td style="vertical-align: middle; padding-right: 8px;">
-                <div style="width: 28px; height: 28px; border-radius: 50%; background-color: #004879; color: #ffffff; font-weight: bold; font-size: 11px; line-height: 28px; text-align: center; border: 1px solid #cbd5e1;">
-                  ${initials}
-                </div>
-              </td>
-              <td style="vertical-align: middle; font-size: 13px; font-weight: bold; color: #1e293b;">
-                ${name}
-              </td>
-            </tr>
-          </table>
-        </td>
+        <td style="font-size: 13px; color: #64748b; border-bottom: 1px solid #e2e8f0; padding: 11px 16px;">Account Holder:</td>
+        <td align="right" style="font-size: 13px; font-weight: bold; color: #1e293b; border-bottom: 1px solid #e2e8f0; padding: 11px 16px;">${name}</td>
       </tr>
       <tr>
         <td style="font-size: 13px; color: #64748b; border-bottom: 1px solid #e2e8f0; padding: 11px 16px;">Requested Amount:</td>
@@ -628,17 +507,9 @@ export async function sendWithdrawalRequestedEmail({ to, name, amount, reference
       </tr>
     </table>
 
-    <table cellpadding="0" cellspacing="0" border="0" style="margin-top: 24px;">
-      <tr>
-        <td style="vertical-align: middle; padding-right: 12px;">
-          <img src="https://vantagecapital.website/avatar.png" width="38" height="38" style="border-radius: 50%; border: 1.5px solid #cbd5e1; display: block;" alt="Desk Officer" />
-        </td>
-        <td style="vertical-align: middle;">
-          <p style="margin: 0; font-size: 13px; font-weight: bold; color: #1e293b; font-family: Arial, sans-serif;">Client Risk & Compliance Operations</p>
-          <p style="margin: 2px 0 0 0; font-size: 12px; color: #64748b; font-family: Arial, sans-serif;">Vantage Capital Technologies, Inc. &bull; McLean, VA</p>
-        </td>
-      </tr>
-    </table>
+    <p style="margin: 20px 0 4px 0; font-size: 13px; color: #64748b;">Sincerely,</p>
+    <p style="margin: 0; font-size: 13px; font-weight: bold; color: #1e293b;">Client Risk & Compliance Operations</p>
+    <p style="margin: 2px 0 0 0; font-size: 12px; color: #64748b;">Vantage Capital Technologies, Inc.</p>
   `;
 
   await sendEmail({
@@ -668,7 +539,6 @@ export async function sendWithdrawalRequestedEmail({ to, name, amount, reference
  */
 export async function sendWithdrawalDispatchedEmail({ to, name, amount, referenceId, bankName }) {
   const formattedAmount = Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const initials = getInitials(name);
   const subject = `Wire Dispatched: $${formattedAmount} USD sent to your bank`;
   const content = `
     <p style="margin: 0 0 16px 0; font-size: 15px;">Dear ${name},</p>
@@ -676,24 +546,11 @@ export async function sendWithdrawalDispatchedEmail({ to, name, amount, referenc
       We are writing to confirm that your withdrawal request has been approved, settled, and dispatched via domestic bank wire to your designated beneficiary account.
     </p>
 
-    <!-- Dispatched Details Table with Profile Avatar -->
+    <!-- Dispatched Details Table -->
     <table width="100%" cellpadding="11" cellspacing="0" border="0" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; margin-bottom: 24px;">
       <tr>
-        <td style="font-size: 13px; color: #64748b; border-bottom: 1px solid #e2e8f0; padding: 12px 16px; vertical-align: middle;">Account Holder:</td>
-        <td align="right" style="border-bottom: 1px solid #e2e8f0; padding: 12px 16px; vertical-align: middle;">
-          <table cellpadding="0" cellspacing="0" border="0" align="right">
-            <tr>
-              <td style="vertical-align: middle; padding-right: 8px;">
-                <div style="width: 28px; height: 28px; border-radius: 50%; background-color: #004879; color: #ffffff; font-weight: bold; font-size: 11px; line-height: 28px; text-align: center; border: 1px solid #cbd5e1;">
-                  ${initials}
-                </div>
-              </td>
-              <td style="vertical-align: middle; font-size: 13px; font-weight: bold; color: #1e293b;">
-                ${name}
-              </td>
-            </tr>
-          </table>
-        </td>
+        <td style="font-size: 13px; color: #64748b; border-bottom: 1px solid #e2e8f0; padding: 11px 16px;">Account Holder:</td>
+        <td align="right" style="font-size: 13px; font-weight: bold; color: #1e293b; border-bottom: 1px solid #e2e8f0; padding: 11px 16px;">${name}</td>
       </tr>
       <tr>
         <td style="font-size: 13px; color: #64748b; border-bottom: 1px solid #e2e8f0; padding: 11px 16px;">Dispatched Amount:</td>
@@ -725,17 +582,9 @@ export async function sendWithdrawalDispatchedEmail({ to, name, amount, referenc
       </tr>
     </table>
 
-    <table cellpadding="0" cellspacing="0" border="0" style="margin-top: 24px;">
-      <tr>
-        <td style="vertical-align: middle; padding-right: 12px;">
-          <img src="https://vantagecapital.website/avatar.png" width="38" height="38" style="border-radius: 50%; border: 1.5px solid #cbd5e1; display: block;" alt="Desk Officer" />
-        </td>
-        <td style="vertical-align: middle;">
-          <p style="margin: 0; font-size: 13px; font-weight: bold; color: #1e293b; font-family: Arial, sans-serif;">Treasury & Wire Disbursements</p>
-          <p style="margin: 2px 0 0 0; font-size: 12px; color: #64748b; font-family: Arial, sans-serif;">Vantage Capital Technologies, Inc. &bull; McLean, VA</p>
-        </td>
-      </tr>
-    </table>
+    <p style="margin: 20px 0 4px 0; font-size: 13px; color: #64748b;">Sincerely,</p>
+    <p style="margin: 0; font-size: 13px; font-weight: bold; color: #1e293b;">Treasury & Wire Disbursements</p>
+    <p style="margin: 2px 0 0 0; font-size: 12px; color: #64748b;">Vantage Capital Technologies, Inc.</p>
   `;
 
   await sendEmail({
