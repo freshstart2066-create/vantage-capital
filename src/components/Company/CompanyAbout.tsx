@@ -138,30 +138,40 @@ export const CompanyAbout: React.FC = () => {
       <div className="neo-box p-6">
         <h2 className="text-base font-bold text-[var(--text-primary)] mb-1 flex items-center gap-2">
           <Users className="w-4 h-4 text-[var(--accent-brand)]" />
-          Executive Leadership & Portfolio Management
+          Institutional Operations & Management Desks
         </h2>
         <p className="text-xs text-[var(--text-muted)] mb-4">
-          Guided by veteran quantitative portfolio managers, institutional risk directors, and algorithmic execution engineers.
+          Structured operational departments managing client custody, capital execution, and depository reconciliation.
         </p>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="neo-inset p-3 rounded-xl flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full neo-box flex items-center justify-center font-bold text-xs text-[var(--accent-brand)]">
-              AV
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="neo-inset p-3.5 rounded-xl space-y-1.5">
+            <div className="flex items-center gap-2 text-xs font-bold text-[var(--text-primary)]">
+              <Landmark className="w-4 h-4 text-[var(--accent-brand)]" />
+              <span>Treasury & Settlement Desk</span>
             </div>
-            <div>
-              <div className="text-xs font-bold text-[var(--text-primary)]">Alexander Vance, CFA</div>
-              <div className="text-[11px] text-[var(--text-muted)]">Managing Director & Head of Portfolio Risk</div>
+            <div className="text-[11px] text-[var(--text-muted)] leading-relaxed">
+              Manages commercial wire routing, client account crediting, and custodial reconciliation at Capital One, N.A. (McLean, VA).
             </div>
           </div>
 
-          <div className="neo-inset p-3 rounded-xl flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full neo-box flex items-center justify-center font-bold text-xs text-[var(--accent-long)]">
-              ER
+          <div className="neo-inset p-3.5 rounded-xl space-y-1.5">
+            <div className="flex items-center gap-2 text-xs font-bold text-[var(--text-primary)]">
+              <Shield className="w-4 h-4 text-[var(--accent-long)]" />
+              <span>Risk Governance Desk</span>
             </div>
-            <div>
-              <div className="text-xs font-bold text-[var(--text-primary)]">Elena Rostova, Ph.D.</div>
-              <div className="text-[11px] text-[var(--text-muted)]">Chief Quantitative Strategist & Execution Research</div>
+            <div className="text-[11px] text-[var(--text-muted)] leading-relaxed">
+              Enforces real-time account risk ceilings, margin monitoring, position limits, and cross-asset volatility thresholds.
+            </div>
+          </div>
+
+          <div className="neo-inset p-3.5 rounded-xl space-y-1.5">
+            <div className="flex items-center gap-2 text-xs font-bold text-[var(--text-primary)]">
+              <Mail className="w-4 h-4 text-purple-400" />
+              <span>Client Services & Operations</span>
+            </div>
+            <div className="text-[11px] text-[var(--text-muted)] leading-relaxed">
+              Institutional account setup, compliance documentation, and dedicated desk assistance at admin@vantagecapital.website.
             </div>
           </div>
         </div>

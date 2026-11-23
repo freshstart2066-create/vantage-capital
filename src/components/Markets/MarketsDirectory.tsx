@@ -270,7 +270,7 @@ export const MarketsDirectory: React.FC = () => {
           <div className="w-8 h-8 rounded-lg neo-inset flex items-center justify-center text-[var(--accent-brand)] mb-2">
             <Globe className="w-4 h-4" />
           </div>
-          <h4 className="text-xs font-bold text-[var(--text-primary)]">Multi-Asset Synergy</h4>
+          <h4 className="text-xs font-bold text-[var(--text-primary)]">Cross-Asset Portfolio Management</h4>
           <p className="text-[11px] text-[var(--text-muted)] mt-1">
             Cross-margin equities, prediction event contracts, commodities, and FX simultaneously from a single unified capital ledger.
           </p>

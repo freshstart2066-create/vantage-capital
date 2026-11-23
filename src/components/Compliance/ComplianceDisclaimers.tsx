@@ -42,7 +42,7 @@ export const ComplianceDisclaimers: React.FC = () => {
           Hypothetical or simulated forward-testing results have inherent limitations. Unlike an actual live performance record, forward simulation results do not represent live capital exposure. Also, since simulated trades have not actually been executed against interbank market makers, results may have under- or over-compensated for the impact of extreme market illiquidity, severe execution slippage, or flash crash events.
         </p>
         <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
-          Forward-testing is utilized strictly to verify mathematical expectancy, validate setup rules, and stress-test risk management controls prior to live deployment. No representation is being made that any account will or is likely to achieve profits identical to simulated metrics.
+          Forward-testing is utilized strictly to verify risk models, validate execution rules, and stress-test risk management controls prior to live deployment. No representation is being made that any account will or is likely to achieve profits identical to simulated metrics.
         </p>
       </div>
 

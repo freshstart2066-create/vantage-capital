@@ -18,43 +18,43 @@ export const CompanyHome: React.FC = () => {
 
   const tiers = [
     {
-      name: 'Private Wealth Mandate',
+      name: 'Private Client Account',
       capital: '$10,000',
-      target: '+10% ($1,000)',
-      dailyLoss: '5% ($500)',
-      maxDd: '10% ($1,000)',
-      lev: '1:100 ECN',
-      description: 'Discretionary equity and currency portfolio for private clients with automated risk stops.',
+      accountType: 'Private Custody',
+      settlement: 'Same-Day Wire',
+      coverage: 'FX Majors, Gold, Equities',
+      execution: 'ECN Direct',
+      description: 'Individual wealth management account with direct depository settlement at Capital One, N.A. (McLean, VA).',
       recommended: false,
     },
     {
-      name: 'Accredited Growth Portfolio',
+      name: 'Core Treasury & Growth',
       capital: '$50,000',
-      target: '+10% ($5,000)',
-      dailyLoss: '5% ($2,500)',
-      maxDd: '10% ($5,000)',
-      lev: '1:100 ECN',
-      description: 'Active alpha strategy combining trend-following with intraday liquidity sweep execution.',
+      accountType: 'Commercial Treasury',
+      settlement: 'Fedwire Priority',
+      coverage: 'FX, Equities, Polymarket',
+      execution: 'Tier-1 Deep Pool',
+      description: 'Active commercial treasury mandate for liquid assets, prediction contracts, and institutional cash management.',
       recommended: true,
     },
     {
       name: 'Institutional Prime Allocation',
       capital: '$100,000',
-      target: '+10% ($10,000)',
-      dailyLoss: '5% ($5,000)',
-      maxDd: '10% ($10,000)',
-      lev: '1:200 ECN',
-      description: 'Multi-asset quantitative fund allocation with co-located low-latency execution.',
+      accountType: 'Multi-Asset Prime',
+      settlement: 'Priority Escrow',
+      coverage: 'Full Multi-Asset Directory',
+      execution: 'Low-Latency Direct',
+      description: 'Institutional trading and asset allocation account with dedicated desk execution and customized risk safeguards.',
       recommended: false,
     },
     {
-      name: 'Managed Strategy Account',
-      capital: '$250,000',
-      target: '+10% ($25,000)',
-      dailyLoss: '5% ($12,500)',
-      maxDd: '10% ($25,000)',
-      lev: '1:200 ECN',
-      description: 'High-capacity institutional liquidity mandate engineered for sustained mathematical expectancy.',
+      name: 'Custom Asset Mandate',
+      capital: '$250,000+',
+      accountType: 'Institutional Mandate',
+      settlement: 'Dedicated Account Liaison',
+      coverage: 'Tailored Allocation',
+      execution: 'Co-Located Direct',
+      description: 'Custom fiduciary custody framework with customized portfolio parameters, tailored wire routing, and priority clearing.',
       recommended: false,
     },
   ];
@@ -223,7 +223,7 @@ export const CompanyHome: React.FC = () => {
             </div>
             <h3 className="text-sm font-bold text-[var(--text-primary)]">Strategy Alpha Validation</h3>
             <p className="text-xs text-[var(--text-muted)] leading-relaxed">
-              Tag every trade setup rule to isolate positive mathematical expectancy, Win Rate %, and Profit Factor before live client deployment.
+              Evaluate execution rules, win rate metrics, and profit factor distributions before live client deployment.
             </p>
           </div>
         </div>
@@ -270,20 +270,20 @@ export const CompanyHome: React.FC = () => {
 
                 <div className="space-y-2 pt-2 border-t border-[var(--border-subtle)] text-xs">
                   <div className="flex justify-between">
-                    <span className="text-[var(--text-muted)]">Target Hurdle:</span>
-                    <span className="font-bold text-[var(--accent-long)]">{tier.target}</span>
+                    <span className="text-[var(--text-muted)]">Structure:</span>
+                    <span className="font-bold text-[var(--accent-brand)]">{tier.accountType}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-[var(--text-muted)]">Max Daily Risk:</span>
-                    <span className="font-bold text-[var(--accent-short)]">{tier.dailyLoss}</span>
+                    <span className="text-[var(--text-muted)]">Wire Clearing:</span>
+                    <span className="font-bold text-[var(--accent-long)]">{tier.settlement}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-[var(--text-muted)]">Max Drawdown:</span>
-                    <span className="font-bold text-[var(--text-primary)]">{tier.maxDd}</span>
+                    <span className="text-[var(--text-muted)]">Instruments:</span>
+                    <span className="font-bold text-[var(--text-primary)]">{tier.coverage}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-[var(--text-muted)]">Execution:</span>
-                    <span className="font-bold text-[var(--accent-brand)]">{tier.lev}</span>
+                    <span className="font-bold text-[var(--text-secondary)]">{tier.execution}</span>
                   </div>
                 </div>
               </div>
@@ -296,7 +296,7 @@ export const CompanyHome: React.FC = () => {
                     : 'neo-btn w-full hover:bg-[var(--bg-sunken)]'
                 }`}
               >
-                Forward-Test This Tier
+                Access Account Terminal
               </button>
             </div>
           ))}
