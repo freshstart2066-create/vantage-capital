@@ -191,7 +191,7 @@ const buildCsp = () => {
     const html = fs.readFileSync(path.join(DIST, 'index.html'), 'utf8');
     hashes = [...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g)].map(m => ` 'sha256-${crypto.createHash('sha256').update(m[1]).digest('base64')}'`).join('');
   } catch { /* not built yet */ }
-  return `default-src 'self'; script-src 'self'${hashes}; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'`;
+  return `default-src 'self'; script-src 'self'${hashes}; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://static.fasthosts.co.uk; font-src 'self' https://fonts.gstatic.com https://static.fasthosts.co.uk data:; img-src 'self' data: blob: https:; connect-src 'self' https://open.er-api.com https://api.binance.com https://api.coinbase.com https://api.coingecko.com wss: ws:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'`;
 };
 function serveStatic(req, res, p) {
   if (req.method !== 'GET' && req.method !== 'HEAD') return send(res, 405, { error: 'Method not allowed.' });

@@ -46,14 +46,26 @@ export function generateHistoricalCandles(instrument: Instrument, timeframe: Tim
   const lastClose = tempPrices[tempPrices.length - 1].close;
   const ratio = instrument.currentPrice / (lastClose || 1);
 
-  return tempPrices.map(c => ({
-    time: c.time,
-    open: Number((c.open * ratio).toFixed(instrument.digits)),
-    high: Number((c.high * ratio).toFixed(instrument.digits)),
-    low: Number((c.low * ratio).toFixed(instrument.digits)),
-    close: Number((c.close * ratio).toFixed(instrument.digits)),
-    volume: c.volume,
-  }));
+  return tempPrices.map(c => {
+    let open = c.open * ratio;
+    let high = c.high * ratio;
+    let low = c.low * ratio;
+    let close = c.close * ratio;
+    if (instrument.category === 'prediction') {
+      open = Math.min(0.99, Math.max(0.01, open));
+      high = Math.min(0.99, Math.max(0.01, high));
+      low = Math.min(0.99, Math.max(0.01, low));
+      close = Math.min(0.99, Math.max(0.01, close));
+    }
+    return {
+      time: c.time,
+      open: Number(open.toFixed(instrument.digits)),
+      high: Number(high.toFixed(instrument.digits)),
+      low: Number(low.toFixed(instrument.digits)),
+      close: Number(close.toFixed(instrument.digits)),
+      volume: c.volume,
+    };
+  });
 }
 
 // Fetch live web rates to anchor our instruments to authentic real-world prices
@@ -108,6 +120,7 @@ export function simulateTick(instrument: Instrument): Instrument {
   const pip = instrument.pipSize;
   const isForex = instrument.category === 'forex';
   const isCrypto = instrument.category === 'crypto';
+  const isPrediction = instrument.category === 'prediction';
   
   // Dynamic tick step based on asset class
   let tickMagnitude = pip;
@@ -115,19 +128,24 @@ export function simulateTick(instrument: Instrument): Instrument {
     tickMagnitude = (Math.random() - 0.495) * pip * 1.5;
   } else if (isCrypto) {
     tickMagnitude = (Math.random() - 0.495) * 8.0;
+  } else if (isPrediction) {
+    tickMagnitude = (Math.random() - 0.495) * 0.008;
   } else {
     tickMagnitude = (Math.random() - 0.495) * 0.12;
   }
 
-  const newPrice = Math.max(instrument.currentPrice + tickMagnitude, pip * 10);
+  let newPrice = Math.max(instrument.currentPrice + tickMagnitude, pip * 10);
+  if (isPrediction) {
+    newPrice = Math.min(0.99, Math.max(0.01, instrument.currentPrice + tickMagnitude));
+  }
   const halfSpread = (instrument.spread * pip) / 2;
   const bid = Number((newPrice - halfSpread).toFixed(instrument.digits));
   const ask = Number((newPrice + halfSpread).toFixed(instrument.digits));
-  const high24h = Math.max(instrument.high24h, newPrice);
-  const low24h = Math.min(instrument.low24h, newPrice);
+  const high24h = isPrediction ? Math.min(0.99, Math.max(instrument.high24h, newPrice)) : Math.max(instrument.high24h, newPrice);
+  const low24h = isPrediction ? Math.max(0.01, Math.min(instrument.low24h, newPrice)) : Math.min(instrument.low24h, newPrice);
   
   // 24h change drift slightly
-  const change24h = Number((instrument.change24h + (tickMagnitude / newPrice) * 10).toFixed(2));
+  const change24h = Number((instrument.change24h + (tickMagnitude / (newPrice || 1)) * 10).toFixed(2));
 
   return {
     ...instrument,

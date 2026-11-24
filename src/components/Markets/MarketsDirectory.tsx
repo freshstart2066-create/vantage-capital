@@ -89,7 +89,8 @@ export const MarketsDirectory: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5">
             {predictionMarkets.map(item => {
-              const yesPct = Math.round(item.currentPrice * 100);
+              const clampedPrice = Math.min(0.99, Math.max(0.01, item.currentPrice));
+              const yesPct = Math.min(99, Math.max(1, Math.round(clampedPrice * 100)));
               const noPct = 100 - yesPct;
               const isPositive = item.change24h >= 0;
 
@@ -133,7 +134,7 @@ export const MarketsDirectory: React.FC = () => {
                     <div>
                       <div className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">Share Price</div>
                       <div className="text-xs font-mono font-bold text-[var(--text-primary)]">
-                        ${item.currentPrice.toFixed(2)} USD
+                        ${clampedPrice.toFixed(2)} USD
                       </div>
                     </div>
 
